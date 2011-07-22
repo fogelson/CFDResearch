@@ -444,20 +444,34 @@ namespace CFD{
 			f = 1;
 		}
 		void updatePolymersAndCalculateStressTensor(double * Udata, double * Sdata){
+			cout << "n = " << n << endl;
 #ifdef FeneTiming
 			CFD::Timing::callUpdatePolymers++;
 			time_t beginCallUpdatePolymers, endCallUpdatePolymers;
 			time(&beginCallUpdatePolymers);
 #endif
 			SymmetricTensorArrayOrder<3> sOrder;
+			//Array<double,3> S;//(shape(n,n,3),sOrder);
 			Array<double,3> S(Sdata,shape(n,n,3),neverDeleteData,sOrder);
+			//S.setStorage(sOrder);
+			//S.resize(n,n,3);
 			VelocityArrayOrder<3> uOrder;
 			Array<double,3> U(Udata,shape(n,n,2),neverDeleteData,uOrder);
+			//Array<double,3> U;//(shape(n,n,2),uOrder);
+			//U.setStorage(uOrder);
+			//U.resize(n,n,2);
+
+			int a = 0;
+
+			cout << a << endl; a++;
+
 			Array<double,2> gradU(shape(2,2));
 			TinyVector<int,2> gradUIndex;
 			gradUIndex(0) = 1;
 			gradUIndex(1) = 1;
 			gradU.reindexSelf(gradUIndex);
+
+			cout << a << endl; a++;
 
 			int iP, iM, jP, jM;
 			for(int i = 0; i < n; i++){
@@ -473,7 +487,7 @@ namespace CFD{
 					gradU(2,2) = (U(i,jP,2) - U(i,jM,2))/(2*deltaY); // Du_22
 
 					stencil->setGradU(gradU);
-					CellDoubleArray fij = f(i,j,g->xRange,g->yRange);
+/*					CellDoubleArray fij = f(i,j,g->xRange,g->yRange);
 #ifdef FeneTiming
 					CFD::Timing::callSolver++;
 					time_t begin, end;
@@ -490,9 +504,10 @@ namespace CFD{
 					stressAtPoint(fij,S11,S12,S22);
 					S(i,j,0) = S11;
 					S(i,j,1) = S12;
-					S(i,j,2) = S22;
+					S(i,j,2) = S22;*/
 				}
 			}
+			cout << a << endl; a++;
 #ifdef FeneTiming
 			time(&endCallUpdatePolymers);
 			CFD::Timing::callUpdatePolymersTime += difftime(endCallUpdatePolymers,beginCallUpdatePolymers);

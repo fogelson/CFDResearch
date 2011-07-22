@@ -56,7 +56,7 @@
 #include <stdio.h>
 #include <fftw.h>
 
-#include "FENETiming.h"
+//#include "FENETiming.h"
 
 #include "FENEStress.h"
 
@@ -85,6 +85,9 @@ int fivept_on;
 int fivept;
 int turnfivept_on;
 int rand_tr;
+
+// FENE Parameters
+double deltaX, h, offset, D, H, Q0;
 
 double lastsaved;
 double finalTime;
@@ -230,7 +233,27 @@ int main(int argc, char *argv[]) {
 	turnfivept_on = false;
 	rand_tr = false;
 
+
+	// ****************************************** //
+	// FENE PARAMETERS
+	Q0 = PI2 / 100.0;
+	h = Q0 * (2.0 / 30.0);
+	offset = h / 2;
+	D = 1;
+	H = 1;
+	deltaX = PI2 / N;
+
+
+	// END FENE PARAMETERS
+	// ****************************************** //
+
 	readParameters(argc, argv);
+
+
+	CFD::FokkerPlanckSolver fps(N, deltaX, dt, h, offset, D, H, Q0);
+
+
+
 	if (dtOn)
 		dt = .01 / (pow(2, (log2(N) - 6)));
 	Total_iterations = int(finalTime / dt + EPS);
@@ -346,22 +369,6 @@ int main(int argc, char *argv[]) {
 		sprintf(command, "mkdir %s", dirname);
 		system(command);
 	}
-
-	// ****************************************** //
-	// FENE PARAMETERS
-	double deltaX, h, offset, D, H, Q0;
-	Q0 = PI2 / 100.0;
-	h = Q0 * (2.0 / 30.0);
-	offset = h / 2;
-	D = 1;
-	H = 1;
-	deltaX = PI2 / N;
-
-	CFD::FokkerPlanckSolver fps(N, deltaX, dt, h, offset, D, H, Q0);
-
-	// END FENE PARAMETERS
-	// ****************************************** //
-
 
 	if (start_w_zero) {
 		time = 0;
@@ -498,7 +505,9 @@ int main(int argc, char *argv[]) {
 
 		bool doFENE = true;
 		if(doFENE){
+			cout << "Started updatePolymers()" << endl;
 			fps.updatePolymersAndCalculateStressTensor(U,S);
+			cout << "Finished updatePolymers()" << endl;
 #ifdef FeneTiming
 			cout << "Ran updatePolymersAndCalculateStressTensor" << endl;
 
@@ -1644,238 +1653,250 @@ void readParameters(int argc, char **argv) {
 					exit(1);
 				}
 			}
-			else
-				if (strcmp(*margv, "-trpts") == 0) {
-					margv++;
-					if (margv == NULL || (jjj = sscanf(*margv, "%d", &tr_pts))
-							!= 1) {
-						fprintf(stderr,
-								"error in parameters: -trpts size , size is integer\n");
-						exit(1);
-					}
+			else if (strcmp(*margv, "-h") == 0){
+				margv++;
+				if(margv == NULL || (jjj = sscanf(*margv, "%lf", &h)) != 1){
+					fprintf(stderr,"error in parameters: -h configuration space width , value is double\n");
+					exit(1);
 				}
-				else
-					if (strcmp(*margv, "-wi") == 0) {
-						margv++;
-						if (margv == NULL || (jjj = sscanf(*margv, "%lf", &Wi))
-								!= 1) {
-							fprintf(stderr,
-									"error in parameters: -wi value , value is double\n");
-							exit(1);
-						}
-					}
-					else
-						if (strcmp(*margv, "-nu") == 0) {
-							margv++;
-							if (margv == NULL || (jjj = sscanf(*margv, "%lf",
-									&NU)) != 1) {
-								fprintf(stderr,
-										"error in parameters: -NU value , value is double\n");
-								exit(1);
-							}
-						}
-						else
-							if (strcmp(*margv, "-dt") == 0) {
-								margv++;
-								if (margv == NULL || (jjj = sscanf(*margv,
-										"%lf", &dt)) != 1) {
-									fprintf(stderr,
-											"error in parameters: -dt value , value is double\n");
-									exit(1);
-								}
-								dtOn = false;
-							}
-							else
-								if (strcmp(*margv, "-beta") == 0) {
-									margv++;
-									if (margv == NULL || (jjj = sscanf(*margv,
-											"%lf", &Beta)) != 1) {
-										fprintf(stderr,
-												"error in parameters: -beta value , value is double\n");
-										exit(1);
-									}
-									betaOn = false;
-								}
-								else
-									if (strcmp(*margv, "-pi") == 0) {
-										pertid = true;
+				offset = h/2;
+			}
+			else if(strcmp(*margv, "-D") == 0){
+				margv++;
+				if(margv == NULL || (jjj = sscanf(*margv, "%lf", &D)) != 1){
+					fprintf(stderr, "error in parameters: -D value , value is double\n");
+					exit(1);
+				}
+			}
+			else if(strcmp(*margv, "-H") == 0){
+				margv++;
+				if(margv == NULL || (jjj = sscanf(*margv, "%lf", &H)) != 1){
+					fprintf(stderr, "error in parameters: -H value , value is double\n");
+					exit(1);
+				}
+			}
+			else if(strcmp(*margv, "-Q0") == 0){
+				margv++;
+				if(margv == NULL || (jjj = sscanf(*margv, "%lf", &Q0)) != 1){
+					fprintf(stderr, "error in parameters: -Q0 value , value is double\n");
+					exit(1);
+				}
+			}
+			else if (strcmp(*margv, "-trpts") == 0) {
+				margv++;
+				if (margv == NULL || (jjj = sscanf(*margv, "%d", &tr_pts))
+						!= 1) {
+					fprintf(stderr,
+							"error in parameters: -trpts size , size is integer\n");
+					exit(1);
+				}
+			}
+			else if (strcmp(*margv, "-wi") == 0) {
+				margv++;
+				if (margv == NULL || (jjj = sscanf(*margv, "%lf", &Wi))
+						!= 1) {
+					fprintf(stderr,
+							"error in parameters: -wi value , value is double\n");
+					exit(1);
+				}
+			}
+			else if (strcmp(*margv, "-nu") == 0) {
+				margv++;
+				if (margv == NULL || (jjj = sscanf(*margv, "%lf",
+						&NU)) != 1) {
+					fprintf(stderr,
+							"error in parameters: -NU value , value is double\n");
+					exit(1);
+				}
+			}
+			else if (strcmp(*margv, "-dt") == 0) {
+				margv++;
+				if (margv == NULL || (jjj = sscanf(*margv,
+						"%lf", &dt)) != 1) {
+					fprintf(stderr,
+							"error in parameters: -dt value , value is double\n");
+					exit(1);
+				}
+				dtOn = false;
+			}
+			else if (strcmp(*margv, "-beta") == 0) {
+				margv++;
+				if (margv == NULL || (jjj = sscanf(*margv,
+						"%lf", &Beta)) != 1) {
+					fprintf(stderr,
+							"error in parameters: -beta value , value is double\n");
+					exit(1);
+				}
+				betaOn = false;
+			}
+			else if (strcmp(*margv, "-pi") == 0) {
+				pertid = true;
 
-									}
-									else
-										if (strcmp(*margv, "-td") == 0) {
-											timedep_F = true;
-										}
-										else
-											if (strcmp(*margv, "-tr") == 0) {
-												tracer = true;
-											}
-											else
-												if (strcmp(*margv, "-restart")
-														== 0) {
-													start_w_zero = false;
-												}
-												else
-													if (strcmp(*margv,
-															"-restart_tr") == 0) {
-														restart_tr = true;
-													}
-													else
-														if (strcmp(*margv,
-																"-mod_off")
-																== 0) {
-															mod_off = true;
-														}
-														else
-															if (strcmp(*margv,
-																	"-rand_tr")
-																	== 0) {
-																rand_tr = true;
-															}
-															else
-																if (strcmp(
-																		*margv,
-																		"-fivept_on")
-																		== 0) {
-																	fivept_on
-																	= true;
-																}
-																else
-																	if (strcmp(
-																			*margv,
-																			"-turnfivept_on")
-																			== 0) {
-																		turnfivept_on
-																		= true;
-																	}
-																	else
-																		if (strcmp(
-																				*margv,
-																				"-lastsaved")
-																				== 0) {
-																			margv++;
-																			if (margv
-																					== NULL
-																					|| (jjj
-																							= sscanf(
-																									*margv,
-																									"%lf",
-																									&lastsaved))
-																									!= 1) {
-																				fprintf(
-																						stderr,
-																						"error in parameters: -lastsaved value , value is double\n");
-																				exit(
-																						1);
-																			}
-																		}
-																		else
-																			if (strcmp(
-																					*margv,
-																					"-finaltime")
-																					== 0) {
-																				margv++;
-																				if (margv
-																						== NULL
-																						|| (jjj
-																								= sscanf(
-																										*margv,
-																										"%lf",
-																										&finalTime))
-																										!= 1) {
-																					fprintf(
-																							stderr,
-																							"error in parameters: -finaltime value , value is double\n");
-																					exit(
-																							1);
-																				}
-																			}
-																			else
-																				if (strcmp(
-																						*margv,
-																						"-savetime")
-																						== 0) {
-																					margv++;
-																					if (margv
-																							== NULL
-																							|| (jjj
-																									= sscanf(
-																											*margv,
-																											"%lf",
-																											&saveTime))
-																											!= 1) {
-																						fprintf(
-																								stderr,
-																								"error in parameters: -savetime value , value is double\n");
-																						exit(
-																								1);
-																					}
-																				}
-																				else {
-																					fprintf(
-																							stderr,
-																							"unknown argument  %s\n",
-																							*margv);
-																					fprintf(
-																							stderr,
-																							" arguments are:\n");
-																					fprintf(
-																							stderr,
-																							" -n size (default 512)\n");
-																					fprintf(
-																							stderr,
-																							" -trpts size (default 64)\n");
-																					fprintf(
-																							stderr,
-																							" -wi value (default 0.1)\n");
-																					fprintf(
-																							stderr,
-																							" -nu value (default 0.0)\n");
-																					fprintf(
-																							stderr,
-																							" -dt value (default .02/(pow(2,(log2(N)-6))) )\n");
-																					fprintf(
-																							stderr,
-																							" -beta value (default  1./(2.*Wi)) )\n");
-																					fprintf(
-																							stderr,
-																							" -pi  (sets pertid = true, default false )\n");
-																					fprintf(
-																							stderr,
-																							" -td  (sets timedep_F = true, default false )\n");
-																					fprintf(
-																							stderr,
-																							" -tr  (sets tracer = true, default false )\n");
-																					fprintf(
-																							stderr,
-																							" -restart  (sets start_w_zero = false, default true )\n");
-																					fprintf(
-																							stderr,
-																							" -restart_tr  (sets restart_tr = true, default false )\n");
-																					fprintf(
-																							stderr,
-																							" -mod_off (sets mod_off = true, default false )\n");
-																					fprintf(
-																							stderr,
-																							" -rand_tr (sets rand_tr = true, default false )\n");
-																					fprintf(
-																							stderr,
-																							" -fivept_on (sets fivept_on = true, default false )\n");
-																					fprintf(
-																							stderr,
-																							" -turnfivept_on (sets turnfivept_on = true, default false )\n");
-																					fprintf(
-																							stderr,
-																							" -lastsaved value (default 1.0)\n");
-																					fprintf(
-																							stderr,
-																							" -finaltime value (default 4.0)\n");
-																					fprintf(
-																							stderr,
-																							" -savetime value (default 1.0)\n");
+			}
+			else if (strcmp(*margv, "-td") == 0) {
+				timedep_F = true;
+			}
+			else if (strcmp(*margv, "-tr") == 0) {
+				tracer = true;
+			}
+			else if (strcmp(*margv, "-restart")
+					== 0) {
+				start_w_zero = false;
+			}
+			else if (strcmp(*margv,
+					"-restart_tr") == 0) {
+				restart_tr = true;
+			}
+			else if (strcmp(*margv,
+					"-mod_off")
+					== 0) {
+				mod_off = true;
+			}
+			else if (strcmp(*margv,
+					"-rand_tr")
+					== 0) {
+				rand_tr = true;
+			}
+			else if (strcmp(
+					*margv,
+					"-fivept_on")
+					== 0) {
+				fivept_on
+				= true;
+			}
+			else if (strcmp(
+					*margv,
+					"-turnfivept_on")
+					== 0) {
+				turnfivept_on
+				= true;
+			}
+			else if (strcmp(
+					*margv,
+					"-lastsaved")
+					== 0) {
+				margv++;
+				if (margv
+						== NULL
+						|| (jjj
+								= sscanf(
+										*margv,
+										"%lf",
+										&lastsaved))
+										!= 1) {
+					fprintf(
+							stderr,
+							"error in parameters: -lastsaved value , value is double\n");
+					exit(
+							1);
+				}
+			}
+			else if (strcmp(
+					*margv,
+					"-finaltime")
+					== 0) {
+				margv++;
+				if (margv
+						== NULL
+						|| (jjj
+								= sscanf(
+										*margv,
+										"%lf",
+										&finalTime))
+										!= 1) {
+					fprintf(
+							stderr,
+							"error in parameters: -finaltime value , value is double\n");
+					exit(
+							1);
+				}
+			}
+			else if (strcmp(
+					*margv,
+					"-savetime")
+					== 0) {
+				margv++;
+				if (margv
+						== NULL
+						|| (jjj
+								= sscanf(
+										*margv,
+										"%lf",
+										&saveTime))
+										!= 1) {
+					fprintf(
+							stderr,
+							"error in parameters: -savetime value , value is double\n");
+					exit(
+							1);
+				}
+			}
+			else {
+				fprintf(
+						stderr,
+						"unknown argument  %s\n",
+						*margv);
+				fprintf(
+						stderr,
+						" arguments are:\n");
+				fprintf(
+						stderr,
+						" -n size (default 512)\n");
+				fprintf(
+						stderr,
+						" -trpts size (default 64)\n");
+				fprintf(
+						stderr,
+						" -wi value (default 0.1)\n");
+				fprintf(
+						stderr,
+						" -nu value (default 0.0)\n");
+				fprintf(
+						stderr,
+						" -dt value (default .02/(pow(2,(log2(N)-6))) )\n");
+				fprintf(
+						stderr,
+						" -beta value (default  1./(2.*Wi)) )\n");
+				fprintf(
+						stderr,
+						" -pi  (sets pertid = true, default false )\n");
+				fprintf(
+						stderr,
+						" -td  (sets timedep_F = true, default false )\n");
+				fprintf(
+						stderr,
+						" -tr  (sets tracer = true, default false )\n");
+				fprintf(
+						stderr,
+						" -restart  (sets start_w_zero = false, default true )\n");
+				fprintf(
+						stderr,
+						" -restart_tr  (sets restart_tr = true, default false )\n");
+				fprintf(
+						stderr,
+						" -mod_off (sets mod_off = true, default false )\n");
+				fprintf(
+						stderr,
+						" -rand_tr (sets rand_tr = true, default false )\n");
+				fprintf(
+						stderr,
+						" -fivept_on (sets fivept_on = true, default false )\n");
+				fprintf(
+						stderr,
+						" -turnfivept_on (sets turnfivept_on = true, default false )\n");
+				fprintf(
+						stderr,
+						" -lastsaved value (default 1.0)\n");
+				fprintf(
+						stderr,
+						" -finaltime value (default 4.0)\n");
+				fprintf(
+						stderr,
+						" -savetime value (default 1.0)\n");
 
-																					exit(
-																							1);
-																				}
+				exit(
+						1);
+			}
 
 			margv++;
 		}
