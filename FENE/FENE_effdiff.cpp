@@ -56,7 +56,7 @@
 #include <stdio.h>
 #include <fftw.h>
 
-//#include "FENETiming.h"
+#include "FENETiming.h"
 
 #include "FENEStress.h"
 

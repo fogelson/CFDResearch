@@ -487,7 +487,7 @@ namespace CFD{
 					gradU(2,2) = (U(i,jP,2) - U(i,jM,2))/(2*deltaY); // Du_22
 
 					stencil->setGradU(gradU);
-/*					CellDoubleArray fij = f(i,j,g->xRange,g->yRange);
+					CellDoubleArray fij = f(i,j,g->xRange,g->yRange);
 #ifdef FeneTiming
 					CFD::Timing::callSolver++;
 					time_t begin, end;
@@ -504,7 +504,7 @@ namespace CFD{
 					stressAtPoint(fij,S11,S12,S22);
 					S(i,j,0) = S11;
 					S(i,j,1) = S12;
-					S(i,j,2) = S22;*/
+					S(i,j,2) = S22;
 				}
 			}
 			cout << a << endl; a++;
