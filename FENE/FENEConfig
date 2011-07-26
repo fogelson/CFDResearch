@@ -1,0 +1,46 @@
+# Configuration file for the FENE_effdiff.cpp FENE solver.
+
+### Time parameters ###
+# deltaT = 0.1
+# finaltime = 4
+# savetime = 1
+
+### Physical space parameters ###
+# Number of grid points in the x and y directions in physical space. Default 512.
+n = 64
+
+### Configuration space parameters ###
+# Grid spacing in the configuration space.
+deltaQ = 0.01
+# Number of grid points in the configuration space. If both deltaQ and nQ
+# are set then nQ will take precedence. If neither are set, then default is nQ = 32.
+nQ = 30
+# Fraction of deltaQ by which to offset the grid. Default 0.5.
+# offset = .5
+
+### Macroscale parameters ###
+# wi = 0.1
+# nu = 0.0
+# beta = 0.5
+
+### FENE Parameters ###
+# Diffusion constant
+D = 1.0
+# Spring stiffness
+H = 1.0
+# Maximum extensibility
+Q0 = 1.0
+
+### Parameters that Becca hasn't explained to me yet.            ###
+### No guarantee that these are correctly read into the program. ###
+# trpts =
+# pi =
+# td =
+# tr =
+# restart =
+# restart_tr =
+# mod_off =
+# rand_tr =
+# fivept_on =
+# turnfivept_on =
+# lastsaved =

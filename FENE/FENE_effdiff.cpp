@@ -47,6 +47,7 @@
 
 // Two dimension of Oldroyd-B.
 
+#include "../ConfigFile/ConfigFile.h"
 
 #include <math.h>
 #include <iostream>
@@ -168,6 +169,8 @@ void Get_update(double *tr, double *U, double *U_hat_Re, double *U_hat_Im,
 void bcuint(double *y, double *y1, double *y2, double *y12, double x1l,
 		double x1u, double x2l, double x2u, double x1, double x2, double *ansy);
 
+void readConfigFile();
+
 void readParameters(int argc, char **argv);
 
 void Get_mixd2U(double *gradU_hat_re, double *gradU_hat_im, double *mixd2U,
@@ -200,7 +203,6 @@ double PI2;
 ////////////////////////////////////////////////////////////////////////////
 
 int main(int argc, char *argv[]) {
-
 	int Total_iterations;
 	int Record_iterations;
 
@@ -249,6 +251,8 @@ int main(int argc, char *argv[]) {
 
 	// END FENE PARAMETERS
 	// ****************************************** //
+
+	readConfigFile();
 
 	readParameters(argc, argv);
 
@@ -1646,6 +1650,69 @@ void zeroboundary_hat(double *A_hat_Re, double *A_hat_Im, int k_dim) {
 	}
 }
 
+void readConfigFile(){
+	ConfigFile config("FENEConfig");
+
+	config.readInto(N,"n");
+
+	config.readInto(D,"D");
+
+	config.readInto(H,"H");
+
+	config.readInto(Q0,"Q0");
+
+	double offsetFrac;
+	if(!config.readInto(offsetFrac,"offset")){
+		offsetFrac = 0.5;
+	}
+
+	/* If the config file specifies nQ, the number
+	 * of unknowns in each direction in configuration space,
+	 * then set h = (1/2)(2Q0/(nq - 1 - offsetFrac) + 2Q0/(nq - 1)).
+	 *
+	 * This is the average of the two values of h bounding the region
+	 * for which there are nQ unknowns in each direction.
+	 */
+	int nQ = 32;
+	if(config.readInto(nQ,"nQ") || !config.readInto(h,"deltaQ")){
+		h = Q0/(nQ - 1.0 - offsetFrac) + Q0/(nQ - offsetFrac);
+	}
+
+	offset = offsetFrac*h;
+
+	config.readInto(tr_pts,"trpts");
+	config.readInto(Wi,"wi");
+	config.readInto(NU,"nu");
+	config.readInto(dt,"deltaT");
+	config.readInto(Beta,"beta");
+	config.readInto(pertid,"pi");
+	bool timedep_Fbool;
+	if(config.readInto(timedep_Fbool,"td")){
+		timedep_F = (int)timedep_Fbool;
+	}
+	bool tracerbool;
+	if(config.readInto(tracerbool,"tr")){
+		tracer = (int)tracerbool;
+	}
+	bool restartbool;
+	if(config.readInto(restartbool,"restart")){
+		if(restartbool){
+			start_w_zero = false;
+		}
+	}
+	bool restart_trbool;
+	if(config.readInto(restart_trbool,"restart_tr")){
+		restart_tr = (int)restart_trbool;
+	}
+	config.readInto(mod_off,"mod_off");
+	config.readInto(rand_tr,"rand_tr");
+	config.readInto(fivept_on,"fivept_on");
+	config.readInto(turnfivept_on,"turnfivept_on");
+	config.readInto(lastsaved,"lastsaved");
+	config.readInto(finalTime,"finaltime");
+	config.readInto(saveTime,"savetime");
+}
+
 void readParameters(int argc, char **argv) {
 	char **margv;
 	int jjj;
@@ -1684,6 +1751,7 @@ void readParameters(int argc, char **argv) {
 					exit(1);
 				}
 			}
+
 			else if(strcmp(*margv, "-Q0") == 0){
 				margv++;
 				if(margv == NULL || (jjj = sscanf(*margv, "%lf", &Q0)) != 1){
@@ -1748,6 +1816,7 @@ void readParameters(int argc, char **argv) {
 			else if (strcmp(*margv, "-tr") == 0) {
 				tracer = true;
 			}
+
 			else if (strcmp(*margv, "-restart")
 					== 0) {
 				start_w_zero = false;
