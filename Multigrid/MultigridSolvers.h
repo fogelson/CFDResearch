@@ -51,13 +51,13 @@ namespace CFD{
 			Interpolator * interpolator;
 			Restrictor * restrictor;
 
-			CellDoubleArray vCycle(CellDoubleArray & u0, CellDoubleArray & f, Stencil * fineStencil, int v1, int v2){
+			CellDoubleArray vCycle(CellDoubleArray u0, CellDoubleArray f, Stencil * fineStencil, int v1, int v2){
 				Grid * fine = fineStencil->getGrid();
 				CellDoubleArray u = fine->makeCellDoubleArray();
 				vCycle(u,u0,f,fineStencil,v1,v2);
 				return u;
 			}
-			void vCycle(CellDoubleArray & u, CellDoubleArray & u0, CellDoubleArray & f, Stencil * fineStencil, int v1, int v2){
+			void vCycle(CellDoubleArray & u, CellDoubleArray u0, CellDoubleArray f, Stencil * fineStencil, int v1, int v2){
 /*ifdef FeneTiming
 				std::clock_t beginVCycle, endVCycle;
 				beginVCycle = std::clock();
@@ -97,7 +97,7 @@ namespace CFD{
 				std::clock_t beginPresmooths, endPresmooths;
 				beginPresmooths = std::clock();
 #endif*/
-				u = smoother->smooth(u0,f,fineStencil,v1);
+				smoother->smooth(u,u0,f,fineStencil,v1);
 /*ifdef FeneTiming
 				endPresmooths = std::clock();
 				cout << "Presmooth: (" << fine->iMax << " x " << fine->jMax << "): " << endPresmooths - beginPresmooths << endl;
@@ -118,23 +118,23 @@ namespace CFD{
 				std::clock_t beginRestrict, endRestrict;
 				beginRestrict = std::clock();
 #endif*/
-				rC = restrictor->doRestrict(rF,fine,coarse);
+				restrictor->doRestrict(rC,rF,fine,coarse);
 /*ifdef FeneTiming
 				endRestrict = std::clock();
 				cout << "Restrict: (" << fine->iMax << " x " << fine->jMax << "): " << endRestrict - beginRestrict << endl;
 #endif*/
 
 				if(coarse->iMax <= 4){
-					eC = smoother->smooth(eC,rC,coarseStencil,32); // 2*(4*4)
+					smoother->smooth(eC,eC,rC,coarseStencil,32); // 2*(4*4)
 				}
 				else{
-					eC = vCycle(eC, rC, coarseStencil, v1, v2);
+					vCycle(eC, eC, rC, coarseStencil, v1, v2);
 				}
 /*ifdef FeneTiming
 				std::clock_t beginInterp, endInterp;
 				beginInterp = std::clock();
 #endif*/
-				eF = interpolator->doInterpolate(eC, fine, coarse);
+				interpolator->doInterpolate(eF, eC, fine, coarse);
 /*ifdef FeneTiming
 				endInterp = std::clock();
 				cout << "Interpolate: (" << fine->iMax << " x " << fine->jMax << "): " << endInterp - beginInterp << endl;
@@ -146,7 +146,7 @@ namespace CFD{
 				beginPost = std::clock();
 #endif*/
 				uCorrected = u + eF;
-				u = smoother->smooth(uCorrected,f,fineStencil,v2);
+				smoother->smooth(u,uCorrected,f,fineStencil,v2);
 /*ifdef FeneTiming
 				endPost = std::clock();
 				cout << "Correct and postsmooth: (" << fine->iMax << " x " << fine->jMax << "): " << endPost - beginPost << endl;
@@ -164,13 +164,12 @@ namespace CFD{
 				this->interpolator = interpolator;
 				this->restrictor = restrictor;
 			}
-			void solve(CellDoubleArray & u, CellDoubleArray & u0, CellDoubleArray & f, Stencil * stencil, int v1, int v2, int its){
-				u = u0;
+			void solve(CellDoubleArray & u, CellDoubleArray u0, CellDoubleArray f, Stencil * stencil, int v1, int v2, int its){
 				for(int n = 0; n < its; n++){
-					u = vCycle(u0,f,stencil,v1,v2);
+					vCycle(u,u0,f,stencil,v1,v2);
 				}
 			}
-			CellDoubleArray solve(CellDoubleArray & u0, CellDoubleArray & f, Stencil * stencil, int v1, int v2, int its){
+			CellDoubleArray solve(CellDoubleArray u0, CellDoubleArray f, Stencil * stencil, int v1, int v2, int its){
 				CellDoubleArray u = stencil->getGrid()->makeCellDoubleArray();
 				solve(u,u0,f,stencil,v1,v2,its);
 				return u;

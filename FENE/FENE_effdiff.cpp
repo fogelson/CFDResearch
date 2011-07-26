@@ -59,6 +59,7 @@
 #include "FENETiming.h"
 
 #include "FENEStress.h"
+#include "FENEMaterialDerivative.h"
 
 using namespace std;
 
@@ -213,6 +214,8 @@ int main(int argc, char *argv[]) {
 	// double *tr_new;
 
 	//      default parameters
+	PI2 = 8. * atan((double) 1.);
+
 	N = 512;
 	Wi = 0.1;
 	NU = 0.;
@@ -251,6 +254,7 @@ int main(int argc, char *argv[]) {
 
 
 	CFD::FokkerPlanckSolver fps(N, deltaX, dt, h, offset, D, H, Q0);
+	CFD::UniformAdvector advect(N, deltaX, deltaX, dt, fps.getGrid());
 
 
 
@@ -302,6 +306,9 @@ int main(int argc, char *argv[]) {
 
 	//  Velocity U=(u1, u2).
 	double *U = (double*) calloc(N2 * 2, sizeof(double));
+	CFD::VelocityArrayOrder<3> uOrder;
+	Array<double,3> Uarray(U,shape(N,N,2),neverDeleteData,uOrder);
+
 
 	double *U_hat_Re = (double*) calloc(N2 * 2, sizeof(double));
 	double *U_hat_Im = (double*) calloc(N2 * 2, sizeof(double));
@@ -357,7 +364,6 @@ int main(int argc, char *argv[]) {
 	cout << " rand_tr = " << rand_tr << endl;
 
 	iterations = 0;
-	PI2 = 8. * atan((double) 1.);
 
 	planN = fftw2d_create_plan(N, N, FFTW_FORWARD, FFTW_ESTIMATE
 			| FFTW_IN_PLACE);
@@ -594,6 +600,9 @@ int main(int argc, char *argv[]) {
 				}
 			}
 		}
+
+		// Advect Fokker-Planck solutions with fluid
+		advect.advect(Uarray,fps.f);
 
 		//cout << "bef if tracer3a " << endl;
 		iterations += 1;

@@ -23,13 +23,17 @@ namespace CFD{
 			// doInterpolate is really clumsy wording, but I want to have parallel
 			// word choice with doRestrict, and restrict is a reserved word so it
 			// can't just be interpolate() and restrict().
-			virtual CellDoubleArray doInterpolate(CellDoubleArray &uC, Grid *fine, Grid *coarse) = 0;
+			virtual CellDoubleArray doInterpolate(CellDoubleArray &uC, Grid *fine, Grid *coarse){
+				CellDoubleArray uF = fine->makeCellDoubleArray();
+				doInterpolate(uF,uC,fine,coarse);
+				return uF;
+			}
+			virtual void doInterpolate(CellDoubleArray & uF, CellDoubleArray & uC, Grid * fine, Grid * coarse) = 0;
 		};
 
 		class InjectiveInterpolator : public Interpolator{
 		public:
-			CellDoubleArray doInterpolate(CellDoubleArray &uC, Grid *fine, Grid *coarse){
-				CellDoubleArray uF = fine->makeCellDoubleArray();
+			void doInterpolate(CellDoubleArray &uF, CellDoubleArray &uC, Grid *fine, Grid *coarse){
 				//int iFMin = fine->iMin, iFMax = fine->iMax, jFMin = fine->jMin, jFMax = fine->jMax;
 				int iCMin = coarse->iMin, iCMax = coarse->iMax, jCMin = coarse->jMin, jCMax = coarse->jMax;
 				for(int iC = iCMin; iC <= iCMax; iC++){
@@ -42,7 +46,6 @@ namespace CFD{
 						}
 					}
 				}
-				return uF;
 			}
 		};
 
@@ -57,8 +60,7 @@ namespace CFD{
 				return (5*p - q)/4;
 			}
 		public:
-			CellDoubleArray doInterpolate(CellDoubleArray &uC, Grid *fine, Grid *coarse){
-				CellDoubleArray uF = fine->makeCellDoubleArray();
+			void doInterpolate(CellDoubleArray &uF, CellDoubleArray &uC, Grid *fine, Grid *coarse){
 				for(int iC = 1; iC <= coarse->iMax; iC++){
 					for(int jC = 1; jC <= coarse->jMax; jC++){
 						int iF = iC*2, jF = jC*2;
@@ -445,8 +447,7 @@ namespace CFD{
 //				}
 //			}
 		public:
-			CellDoubleArray doInterpolate(CellDoubleArray &uC, Grid *fine, Grid *coarse){
-				CellDoubleArray uF = fine->makeCellDoubleArray();
+			void doInterpolate(CellDoubleArray &uF, CellDoubleArray &uC, Grid *fine, Grid *coarse){
 				//uC = coarse->makeCellDoubleArray();
 				//uC = 1;
 				cout << uC.shape() << endl;
@@ -519,13 +520,17 @@ namespace CFD{
 			virtual ~Restrictor(){};
 			// restrict is a reserved word in C++, so we can't just have this
 			// function called restrict(). So we call it doRestrict() instead.
-			virtual CellDoubleArray doRestrict(CellDoubleArray &uF, Grid *fine, Grid *coarse) = 0;
+			virtual CellDoubleArray doRestrict(CellDoubleArray &uF, Grid *fine, Grid *coarse){
+				CellDoubleArray uC = coarse->makeCellDoubleArray();
+				doRestrict(uF,uC,fine,coarse);
+				return uC;
+			}
+			virtual void doRestrict(CellDoubleArray & uC, CellDoubleArray & uF, Grid * fine, Grid * coarse) = 0;
 		};
 
 		class VolumeWeightedRestrictor : public Restrictor{
 		public:
-			CellDoubleArray doRestrict(CellDoubleArray &uF, Grid *fine, Grid *coarse){
-				CellDoubleArray uC = coarse->makeCellDoubleArray();
+			void doRestrict(CellDoubleArray &uC, CellDoubleArray &uF, Grid *fine, Grid *coarse){
 				//int iFMin = fine->iMin, iFMax = fine->iMax, jFMin = fine->jMin, jFMax = fine->jMax;
 				int iCMin = coarse->iMin, iCMax = coarse->iMax, jCMin = coarse->jMin, jCMax = coarse->jMax;
 				for(int iC = iCMin; iC <= iCMax; iC++){
@@ -544,7 +549,6 @@ namespace CFD{
 						}
 					}
 				}
-				return uC;
 			}
 		};
 	}

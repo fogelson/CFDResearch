@@ -30,8 +30,8 @@ namespace CFD{
 		class StenciledSmoother{
 		public:
 			virtual ~StenciledSmoother(){}
-			virtual void smooth(CellDoubleArray & u, CellDoubleArray & u0, CellDoubleArray & f, Stencil * s, int its) = 0;
-			virtual CellDoubleArray smooth(CellDoubleArray & u0, CellDoubleArray & f, Stencil * s, int its){
+			virtual void smooth(CellDoubleArray & u, CellDoubleArray u0, CellDoubleArray f, Stencil * s, int its) = 0;
+			virtual CellDoubleArray smooth(CellDoubleArray u0, CellDoubleArray f, Stencil * s, int its){
 				Grid * g = s->getGrid();
 				CellDoubleArray u = g->makeCellDoubleArray();
 				smooth(u,u0,f,s,its);
@@ -41,7 +41,7 @@ namespace CFD{
 
 		class StenciledGSLex : public StenciledSmoother{
 		public:
-			void smooth(CellDoubleArray & u, CellDoubleArray & u0, CellDoubleArray & f, Stencil * s, int its){
+			void smooth(CellDoubleArray & u, CellDoubleArray u0, CellDoubleArray f, Stencil * s, int its){
 				Grid * g = s->getGrid();
 				u = u0;
 				for(int n = 1; n <= its; n++){
@@ -119,7 +119,7 @@ namespace CFD{
 				}
 			}
 		public:
-			void smooth(CellDoubleArray & u, CellDoubleArray & u0, CellDoubleArray & f, Stencil * s, int its){
+			void smooth(CellDoubleArray & u, CellDoubleArray u0, CellDoubleArray f, Stencil * s, int its){
 				Grid * g = s->getGrid();
 				u = u0;
 				for(int n = 1; n <= its; n++){

@@ -26,6 +26,7 @@
 							<tool id="cdt.managedbuild.tool.macosx.c.linker.macosx.base.836469927" name="MacOS X C Linker" superClass="cdt.managedbuild.tool.macosx.c.linker.macosx.base"/>
 							<tool command="g++" id="cdt.managedbuild.tool.macosx.cpp.linker.macosx.base.759830409" name="MacOS X C++ Linker" superClass="cdt.managedbuild.tool.macosx.cpp.linker.macosx.base">
 								<option id="macosx.cpp.link.option.libs.2107880813" name="Libraries (-l)" superClass="macosx.cpp.link.option.libs" valueType="libs">
+									<listOptionValue builtIn="false" value="blitz"/>
 									<listOptionValue builtIn="false" value="fftw"/>
 									<listOptionValue builtIn="false" value="lapackpp"/>
 								</option>
@@ -66,15 +67,12 @@
 						</toolChain>
 					</folderInfo>
 					<fileInfo id="cdt.managedbuild.config.gnu.macosx.exe.debug.2062944875.1045649261" name="BlitzMatlab.h" rcbsApplicability="disable" resourcePath="BlitzMatlab.h" toolsToInvoke=""/>
-					<fileInfo id="cdt.managedbuild.config.gnu.macosx.exe.debug.2062944875.1751111204" name="FENE_effdiff.cpp" rcbsApplicability="disable" resourcePath="FENE/FENE_effdiff.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.macosx.base.745001158.458862353">
-						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.macosx.base.745001158.458862353" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.macosx.base.745001158"/>
-					</fileInfo>
 					<sourceEntries>
-						<entry excluding="FENE/Oldb_effdiff.cpp|StencilTester.cpp|steadyFlowTester.cpp|FiniteDifference.cpp|mxLoadSteadyFlow.cpp|mxStenciledMultigrid.cpp|mxSteadyFlowFromFile.cpp|Solvers|mxSmootherTest.cpp|mxGetGridInfo.cpp|mxFileTemplate.cpp|solveTridiag.cpp|Geometry|mxMakeLaplacian.cpp|mxSolveTridiag.cpp|mxConjugateGradients.cpp|LinearAlgebra|mxPoissonMultigrid.cpp|mxBilinearInterpolation.cpp|Multigrid|mxForwardEulerAdvectionDiffusion.cpp|mxJacobi.cpp|mxForwardEulerDiffusion.cpp|mxMultigrid.cpp|BlitzMatlab.h" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
 						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="Geometry"/>
 						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="Solvers"/>
 						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="Multigrid"/>
 						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="LinearAlgebra"/>
+						<entry excluding="mxAdvectionTest.cpp|FENE/Oldb_effdiff.cpp|StencilTester.cpp|steadyFlowTester.cpp|FiniteDifference.cpp|mxLoadSteadyFlow.cpp|mxStenciledMultigrid.cpp|mxSteadyFlowFromFile.cpp|Solvers|mxSmootherTest.cpp|mxGetGridInfo.cpp|mxFileTemplate.cpp|solveTridiag.cpp|Geometry|mxMakeLaplacian.cpp|mxSolveTridiag.cpp|mxConjugateGradients.cpp|LinearAlgebra|mxPoissonMultigrid.cpp|mxBilinearInterpolation.cpp|Multigrid|mxForwardEulerAdvectionDiffusion.cpp|mxJacobi.cpp|mxForwardEulerDiffusion.cpp|mxMultigrid.cpp|BlitzMatlab.h" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
 					</sourceEntries>
 				</configuration>
 			</storageModule>
@@ -969,15 +967,12 @@
 							</tool>
 						</toolChain>
 					</folderInfo>
-					<fileInfo id="cdt.managedbuild.config.macosx.exe.release.1021053805.623315161" name="FENE_effdiff.cpp" rcbsApplicability="disable" resourcePath="FENE/FENE_effdiff.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.macosx.exe.release.1990187495.470712173">
-						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.macosx.exe.release.1990187495.470712173" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.macosx.exe.release.1990187495"/>
-					</fileInfo>
 					<sourceEntries>
 						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="Solvers"/>
 						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="LinearAlgebra"/>
 						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="Geometry"/>
 						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="Multigrid"/>
-						<entry excluding="StencilTester.cpp|steadyFlowTester.cpp|FiniteDifference.cpp|mxLoadSteadyFlow.cpp|FENE|Solvers|Geometry|LinearAlgebra|Multigrid" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
+						<entry excluding="mxAdvectionTest.cpp|StencilTester.cpp|steadyFlowTester.cpp|FiniteDifference.cpp|mxLoadSteadyFlow.cpp|FENE|Solvers|Geometry|LinearAlgebra|Multigrid" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
 					</sourceEntries>
 				</configuration>
 			</storageModule>

@@ -408,8 +408,8 @@ namespace CFD{
 
 		CellDoubleArray F;
 
-		Array<double,4> f;
 	public:
+		Array<double,4> f;
 		~FokkerPlanckSolver(){
 			delete g;
 			delete stencil;
@@ -444,7 +444,8 @@ namespace CFD{
 			f = 1;
 		}
 		void updatePolymersAndCalculateStressTensor(double * Udata, double * Sdata){
-			cout << "n = " << n << endl;
+//			cout << "n = " << n << endl;
+//			cout << "iMin = " << g->iMin << ", iMax = " << g->iMax << endl;
 #ifdef FeneTiming
 			CFD::Timing::callUpdatePolymers++;
 			time_t beginCallUpdatePolymers, endCallUpdatePolymers;
@@ -461,9 +462,9 @@ namespace CFD{
 			//U.setStorage(uOrder);
 			//U.resize(n,n,2);
 
-			int a = 0;
+			//int a = 0;
 
-			cout << a << endl; a++;
+//			cout << a << endl; a++;
 
 			Array<double,2> gradU(shape(2,2));
 			TinyVector<int,2> gradUIndex;
@@ -471,7 +472,7 @@ namespace CFD{
 			gradUIndex(1) = 1;
 			gradU.reindexSelf(gradUIndex);
 
-			cout << a << endl; a++;
+//			cout << a << endl; a++;
 
 			int iP, iM, jP, jM;
 			for(int i = 0; i < n; i++){
@@ -507,7 +508,7 @@ namespace CFD{
 					S(i,j,2) = S22;
 				}
 			}
-			cout << a << endl; a++;
+//			cout << a << endl; a++;
 #ifdef FeneTiming
 			time(&endCallUpdatePolymers);
 			CFD::Timing::callUpdatePolymersTime += difftime(endCallUpdatePolymers,beginCallUpdatePolymers);
@@ -552,6 +553,9 @@ namespace CFD{
 					}
 				}
 			}
+		}
+		Grid * getGrid(){
+			return g;
 		}
 	};
 
