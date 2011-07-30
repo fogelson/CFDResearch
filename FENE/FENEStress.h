@@ -462,6 +462,9 @@ namespace CFD{
 			//U.setStorage(uOrder);
 			//U.resize(n,n,2);
 
+			cout << "At beginning of updatePolymers(): max(U) = " << max(U);
+			cout << " and max(S) = " << max(S) << endl;
+
 			//int a = 0;
 
 //			cout << a << endl; a++;
@@ -476,16 +479,16 @@ namespace CFD{
 
 			int iP, iM, jP, jM;
 			for(int i = 0; i < n; i++){
-				iP = (i + 1) % n;
-				iM = (i - 1) % n;
+				iP = (i + 1 + n) % n;
+				iM = (i - 1 + n) % n;
 				for(int j = 0; j < n; j++){
-					jP = (j + 1) % n;
-					jM = (j - 1) % n;
+					jP = (j + 1 + n) % n;
+					jM = (j - 1 + n) % n;
 
-					gradU(1,1) = (U(iP,j,1) - U(iM,j,1))/(2*deltaX); // Du_11
-					gradU(1,2) = (U(i,jP,1) - U(i,jM,1))/(2*deltaY); // Du_12
-					gradU(2,1) = (U(iP,j,2) - U(iM,j,2))/(2*deltaX); // Du_21
-					gradU(2,2) = (U(i,jP,2) - U(i,jM,2))/(2*deltaY); // Du_22
+					gradU(1,1) = (U(iP,j,0) - U(iM,j,0))/(2*deltaX); // Du_11
+					gradU(1,2) = (U(i,jP,0) - U(i,jM,0))/(2*deltaY); // Du_12
+					gradU(2,1) = (U(iP,j,1) - U(iM,j,1))/(2*deltaX); // Du_21
+					gradU(2,2) = (U(i,jP,1) - U(i,jM,1))/(2*deltaY); // Du_22
 
 					stencil->setGradU(gradU);
 					CellDoubleArray fij = f(i,j,g->xRange,g->yRange);
@@ -506,8 +509,12 @@ namespace CFD{
 					S(i,j,0) = S11;
 					S(i,j,1) = S12;
 					S(i,j,2) = S22;
+
 				}
 			}
+			cout << "At end of updatePolymers(). max(f) = " << max(f);
+			cout << " and max(U) = " << max(U);
+			cout << " and max(S) = " << max(S) << endl;
 //			cout << a << endl; a++;
 #ifdef FeneTiming
 			time(&endCallUpdatePolymers);
@@ -526,7 +533,7 @@ namespace CFD{
 			for(int i = g->iMin; i <= g->iMax; i++){
 				for(int j = g->jMin; j <= g->jMax; j++){
 					if(g->isUncovered(i,j)){
-						Coord Q = g->cellCentroids(i,j);
+						Coord Q = g->centers(i,j);// g->cellCentroids(i,j);
 						double dQ = (g->volumeFractions(i,j))*pow2(g->h);
 
 						S11 += f(i,j)*F(i,j)*pow2(Q(0))*dQ;
@@ -548,8 +555,10 @@ namespace CFD{
 			for(int i = g->iMin; i <= g->iMax; i++){
 				for(int j = g->jMin; j <= g->jMax; j++){
 					if(g->isUncovered(i,j)){
-						double Q = magnitude(g->cellCentroids(i,j));
+						double Q = magnitude(g->centers(i,j));//magnitude(g->cellCentroids(i,j));
+						Q = min(Q0-h/10.0,Q);
 						F(i,j) = H/(1 - pow2(Q/Q0));
+						//F(i,j) = H*magnitude(g->centers(i,j));
 					}
 				}
 			}

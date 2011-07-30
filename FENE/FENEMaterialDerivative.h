@@ -11,13 +11,14 @@
 #include "MacroscaleObjects.h"
 #include "../Geometry.h"
 
+#define MaterialDerivativeDebug
 
 namespace CFD{
 	using namespace Geometry;
 	class UniformAdvector{
 
 		int n;
-		double deltaX, deltaY, deltaT;
+		double deltaX, deltaY;
 		Grid * grid;
 		Array<double,2> Ap;
 		Array<double,2> Am;
@@ -29,11 +30,10 @@ namespace CFD{
 		Array<double,2> v;
 		Array<double,2> uM, uP, vM, vP;
 	public:
-		UniformAdvector(int n, double deltaX, double deltaY, double deltaT, Grid * grid){
+		UniformAdvector(int n, double deltaX, double deltaY, Grid * grid){
 			this->n = n;
 			this->deltaX = deltaX;
 			this->deltaY = deltaY;
-			this->deltaT = deltaT;
 			this->grid = grid;
 
 			Ap.resize(n,n);
@@ -65,7 +65,7 @@ namespace CFD{
 		 * Uses the corner transport upwinding (CTU) algorithm described in
 		 * section 20.5 of Leveque (FVM).
 		 */
-		void advectFlat(const Array<double,3> & U, Array<double,2> & f){
+		void advectFlat(double deltaT, const Array<double,3> & U, Array<double,2> & f){
 
 			//cout << a << endl; a++;
 			// Compute velocities at cell edges
@@ -210,11 +210,29 @@ namespace CFD{
 			return out;
 		}
 
-		void advect(const Array<double,3> & U, Array<double,4> & f){
+		void advect(double deltaT, const Array<double,3> & U, Array<double,4> & f){
 			int iM, iP, jM, jP;
 
 			// Compute velocities at cell edges
 			setEdgeVelocities(U,u,v);
+
+			double uMax, vMax;
+			uMax = max(u);
+			vMax = max(v);
+			double uCFL, vCFL, CFL;
+			uCFL = abs(uMax*deltaT/deltaX);
+			vCFL = abs(vMax*deltaT/deltaY);
+			CFL = max(uCFL,vCFL);
+			if(CFL >= 0.9){
+				advect(deltaT/2,U,f);
+				advect(deltaT/2,U,f);
+				return;
+			}
+#ifdef MaterialDerivativeDebug
+			cout << "uMax = " << uMax << ". vMax = " << vMax << endl;
+			cout << "deltaT = " << deltaT <<". deltaX = " << deltaX << ". deltaY = " << deltaY << endl;
+			cout << "Advecting f with a CFL number of " << CFL << endl;
+#endif
 
 			uM = min(u,0);
 			uP = max(u,0);

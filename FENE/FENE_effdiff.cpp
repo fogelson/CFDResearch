@@ -57,7 +57,7 @@
 #include <stdio.h>
 #include <fftw.h>
 
-#include "FENETiming.h"
+//#include "FENETiming.h"
 
 #include "FENEStress.h"
 #include "FENEMaterialDerivative.h"
@@ -256,14 +256,16 @@ int main(int argc, char *argv[]) {
 
 	readParameters(argc, argv);
 
-
-	CFD::FokkerPlanckSolver fps(N, deltaX, dt, h, offset, D, H, Q0);
-	CFD::UniformAdvector advect(N, deltaX, deltaX, dt, fps.getGrid());
-
-
-
 	if (dtOn)
 		dt = .01 / (pow(2, (log2(N) - 6)));
+
+	cout << "deltaT should really equal " << dt << endl;
+
+	CFD::FokkerPlanckSolver fps(N, deltaX, dt, h, offset, D, H, Q0);
+	CFD::UniformAdvector advect(N, deltaX, deltaX, fps.getGrid());
+
+
+
 	Total_iterations = int(finalTime / dt + EPS);
 	Record_iterations = int(saveTime / dt + EPS);
 	//        Total_iterations = int(finalTime *100 + EPS);
@@ -380,6 +382,7 @@ int main(int argc, char *argv[]) {
 		system(command);
 	}
 
+	/* If starting a new simulation, call this */
 	if (start_w_zero) {
 		time = 0;
 		if (pertid)
@@ -396,6 +399,7 @@ int main(int argc, char *argv[]) {
 
 		}
 	}
+	/* If restarting a simulation, load from files */
 	else {
 		time = lastsaved;
 		sprintf(filename, "%s/S%3.3f.dat", dirname, lastsaved);
@@ -443,12 +447,19 @@ int main(int argc, char *argv[]) {
 		}
 	}
 
+	/* Compute Fourier transform of S, store the
+	 * real and imaginary parts in S_hat_Re and S_hat_Im.
+	 */
 	Get_hat(S, S_hat_Re, S_hat_Im, 3);
 
 	zeroboundary_hat(S_hat_Re, S_hat_Im, 3);
 
+	/* Set frequency modes in Freq */
 	Get_Frequency(Freq);
 
+	/* Get the fourier transform of the forcing function,
+	 * and store it in F_hat_Re and F_hat_Im
+	 */
 	if (timedep_F)
 		Get_F_hat_t(F_hat_Re, F_hat_Im, time, iterations);
 	else
@@ -458,17 +469,25 @@ int main(int argc, char *argv[]) {
 	///////////////////--- STEP 2. Updating S, U ---/////////////////////////
 	/////////////////////////////////////////////////////////////////////////
 
-
 	// for saving data.
 	while (iterations <= Total_iterations) {
 
-		//1.    Get P_hat and U_hat.
+		/*
+		 * Solve Stokes equation by computing U_hat and P_hat from S_hat and F_hat
+		 */
 		Get_P_U_hat(P_hat_Re, P_hat_Im, U_hat_Re, U_hat_Im, S_hat_Re, S_hat_Im,
 				F_hat_Re, F_hat_Im, Freq);
 
-		//4.    Saving U and S.
+		/*
+		 * Since U is needed for the Fokker-Planck and advection solves,
+		 * compute it from U_hat
+		 */
+		Get_U_S(U, U_hat_Re, U_hat_Im, 2);
 
-		// get U and S and save
+		/*
+		 * If the current iteration is at a save time, compute U and S
+		 * from U_hat and S_hat, and save
+		 */
 		if ((iterations % Record_iterations) == 0) {
 			sprintf(filename, "%s/U%3.3f.dat", dirname, time);
 
@@ -511,8 +530,11 @@ int main(int argc, char *argv[]) {
 			}
 		}
 
-		//2.    Update S using Second-Order ABCN.
 
+		/*
+		 * Solve the Fokker-Planck equation for f, and use f to get S.
+		 * Then compute S_hat from S.
+		 */
 		bool doFENE = true;
 		if(doFENE){
 			cout << "Started updatePolymers()" << endl;
@@ -531,6 +553,8 @@ int main(int argc, char *argv[]) {
 			cout << ". Total time in method: " << CFD::Timing::callUpdatePolymersTime << endl;
 #endif
 			Get_hat(S, S_hat_Re, S_hat_Im, 3);
+			//zeroboundary_hat(S_hat_Re, S_hat_Im, 3);
+
 		}
 		else{
 			if (iterations == 0 && start_w_zero) {
@@ -605,8 +629,10 @@ int main(int argc, char *argv[]) {
 			}
 		}
 
+		cout << "Max velocity value is: " << max(Uarray) << endl;
+
 		// Advect Fokker-Planck solutions with fluid
-		advect.advect(Uarray,fps.f);
+		advect.advect(dt,Uarray,fps.f);
 
 		//cout << "bef if tracer3a " << endl;
 		iterations += 1;
@@ -1683,7 +1709,9 @@ void readConfigFile(){
 	config.readInto(tr_pts,"trpts");
 	config.readInto(Wi,"wi");
 	config.readInto(NU,"nu");
-	config.readInto(dt,"deltaT");
+	if(config.readInto(dt,"deltaT")){
+		dtOn = false;
+	}
 	config.readInto(Beta,"beta");
 	config.readInto(pertid,"pi");
 	bool timedep_Fbool;
