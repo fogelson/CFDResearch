@@ -89,7 +89,7 @@ int turnfivept_on;
 int rand_tr;
 
 // FENE Parameters
-double deltaX, h, offset, D, H, Q0;
+double deltaX, h, offset, D, H, Q0, lambda;
 
 double lastsaved;
 double finalTime;
@@ -184,7 +184,7 @@ void Get_grad_hat(double *A_hat_re, double *A_hat_im, double *gradA_hat_re,
 // define plans for fftw so that they are reusable
 
 fftwnd_plan planN;
-double PI2;
+double PI2, kB;
 
 //#define BECCA_DEBUG
 
@@ -246,6 +246,7 @@ int main(int argc, char *argv[]) {
 	offset = h / 2;
 	D = 1;
 	H = 1;
+	lambda = 1;
 	deltaX = PI2 / N;
 
 
@@ -261,7 +262,7 @@ int main(int argc, char *argv[]) {
 
 	cout << "deltaT should really equal " << dt << endl;
 
-	CFD::FokkerPlanckSolver fps(N, deltaX, dt, h, offset, D, H, Q0);
+	CFD::FokkerPlanckSolver fps(N, deltaX, dt, h, offset, D, H, Q0, lambda);
 	CFD::UniformAdvector advect(N, deltaX, deltaX, fps.getGrid());
 
 
@@ -321,6 +322,8 @@ int main(int argc, char *argv[]) {
 
 	//  Stress tensor S=(S1, S2; S2, S3);
 	double *S = (double*) calloc(N2 * 3, sizeof(double));
+	CFD::SymmetricTensorArrayOrder<3> sOrder;
+	Array<double,3> Sarray(S,shape(N,N,3),neverDeleteData,sOrder);
 
 	double *S_hat_Re = (double*) calloc(N2 * 3, sizeof(double));
 	double *S_hat_Im = (double*) calloc(N2 * 3, sizeof(double));
@@ -368,14 +371,19 @@ int main(int argc, char *argv[]) {
 	cout << " mod_off = " << mod_off << endl;
 	cout << " fivept_on = " << fivept_on << endl;
 	cout << " rand_tr = " << rand_tr << endl;
+	cout << " D = " << D << endl;
+	cout << " H = " << H << endl;
+	cout << " Q0 = " << Q0 << endl;
+	cout << " lambda = " << lambda << endl;
 
 	iterations = 0;
 
 	planN = fftw2d_create_plan(N, N, FFTW_FORWARD, FFTW_ESTIMATE
 			| FFTW_IN_PLACE);
 
-	sprintf(dirname, "./wi%.2f_n%d_nu%.6f_pi%d_td%d", Wi, N, NU, pertid,
-			timedep_F);
+	/*sprintf(dirname, "./wi%.2f_n%d_nu%.6f_pi%d_td%d", Wi, N, NU, pertid,
+			timedep_F);*/
+	sprintf(dirname, "./data");
 
 	if (access(dirname, F_OK)) { /* data directory not present */
 		sprintf(command, "mkdir %s", dirname);
@@ -385,10 +393,13 @@ int main(int argc, char *argv[]) {
 	/* If starting a new simulation, call this */
 	if (start_w_zero) {
 		time = 0;
-		if (pertid)
+		if (pertid){
 			initialization_Spert(S);
-		else
+		}
+		else{
 			initialization_S(S);
+			Sarray = 0;
+		}
 		if (tracer) {
 			if (rand_tr)
 				init_tr_rand(tr);
@@ -471,27 +482,56 @@ int main(int argc, char *argv[]) {
 
 	// for saving data.
 	while (iterations <= Total_iterations) {
+		/*
+		 * Order of solver:
+		 *
+		 * 1. Solve Stokes equations with current polymeric stress tensor S
+		 * 2. Solve the configuration space portion of the Fokker-Planck equation
+		 *    for the pdf f(x,q,t) of polymer configurations
+		 * 3. Use the current fluid velocity to solve the physical space portion
+		 *    of the Fokker-Planck equation, which advects it with the fluid velocity.
+		 * 4. Calculate the polymeric stress tensor S from the current pdf of
+		 *    the polymer configuration
+		 */
 
 		/*
-		 * Solve Stokes equation by computing U_hat and P_hat from S_hat and F_hat
+		 * 1. Solve Stokes equations with current polymeric stress tensor S
 		 */
+
+		// Compute Fourier Transform of S
+		Get_hat(S, S_hat_Re, S_hat_Im, 3);
+		// Solve for P_hat and U_hat in Fourier space
 		Get_P_U_hat(P_hat_Re, P_hat_Im, U_hat_Re, U_hat_Im, S_hat_Re, S_hat_Im,
 				F_hat_Re, F_hat_Im, Freq);
-
-		/*
-		 * Since U is needed for the Fokker-Planck and advection solves,
-		 * compute it from U_hat
-		 */
+		// Take the inverse Fourier transform to get U in physical space
 		Get_U_S(U, U_hat_Re, U_hat_Im, 2);
 
 		/*
-		 * If the current iteration is at a save time, compute U and S
-		 * from U_hat and S_hat, and save
+		 * 2. Solve the configuration space portion of the Fokker-Planck equation
+		 *    for the pdf f(x,q,t) of polymer configurations
 		 */
+
+		fps.solveFokkerPlanck(Uarray);
+
+		/*
+		 * 3. Use the current fluid velocity to solve the physical space portion
+		 *    of the Fokker-Planck equation, which advects it with the fluid velocity.
+		 */
+
+//		advect.advect(dt,Uarray,fps.f);
+
+		/*
+		 * 4. Calculate the polymeric stress tensor S from the current pdf of
+		 *    the polymer configuration
+		 */
+
+		fps.calculateStress(Sarray);
+
+		/* Save the current iteration if it is a savetime */
 		if ((iterations % Record_iterations) == 0) {
 			sprintf(filename, "%s/U%3.3f.dat", dirname, time);
 
-			Get_U_S(U, U_hat_Re, U_hat_Im, 2);
+			//Get_U_S(U, U_hat_Re, U_hat_Im, 2);
 
 			Save_U_S(U, filename, 2);
 			sprintf(filename, "%s/S%3.3f.dat", dirname, time);
@@ -535,8 +575,8 @@ int main(int argc, char *argv[]) {
 		 * Solve the Fokker-Planck equation for f, and use f to get S.
 		 * Then compute S_hat from S.
 		 */
-		bool doFENE = true;
-		if(doFENE){
+/*		bool doFENE = true;
+		if(doFENE && false){
 			cout << "Started updatePolymers()" << endl;
 			fps.updatePolymersAndCalculateStressTensor(U,S);
 			cout << "Finished updatePolymers()" << endl;
@@ -556,7 +596,7 @@ int main(int argc, char *argv[]) {
 			//zeroboundary_hat(S_hat_Re, S_hat_Im, 3);
 
 		}
-		else{
+		else if(false){
 			if (iterations == 0 && start_w_zero) {
 				update_S_hat(RHS_Re, RHS_Im, S_hat_Re, S_hat_Im, U_hat_Re,
 						U_hat_Im, Freq);
@@ -627,12 +667,12 @@ int main(int argc, char *argv[]) {
 					}
 				}
 			}
-		}
-
+		}*/
+/*
 		cout << "Max velocity value is: " << max(Uarray) << endl;
 
 		// Advect Fokker-Planck solutions with fluid
-		advect.advect(dt,Uarray,fps.f);
+		advect.advect(dt,Uarray,fps.f);*/
 
 		//cout << "bef if tracer3a " << endl;
 		iterations += 1;
@@ -1681,11 +1721,26 @@ void readConfigFile(){
 
 	config.readInto(N,"n");
 
-	config.readInto(D,"D");
+	kB = config.read<double>("kB",1.3806488e-23);
 
-	config.readInto(H,"H");
+	string FENEMode = config.read<string>("FENEMode","free");
+	if(FENEMode == "du"){
+		double zeta, T, H_du;
+		config.readInto(H_du,"H_du");
+		config.readInto(zeta,"zeta_du");
+		config.readInto(T,"T_du");
+		config.readInto(Q0,"Q0_du");
+		config.readInto(lambda,"lambda_du");
 
-	config.readInto(Q0,"Q0");
+		H = 2*H_du/zeta;
+		D = 2*kB*T/zeta;
+	}
+	else{
+		config.readInto(H,"H_free");
+		config.readInto(D,"D_free");
+		config.readInto(Q0,"Q0_free");
+		config.readInto(lambda,"lambda_free");
+	}
 
 	double offsetFrac;
 	if(!config.readInto(offsetFrac,"offset")){

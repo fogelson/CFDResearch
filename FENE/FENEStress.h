@@ -20,6 +20,7 @@ namespace CFD{
 	using namespace Geometry;
 	using namespace Multigrid;
 
+/*
 	typedef TinyVector<int,2> Index;
 
 	struct IndexCompare{
@@ -32,11 +33,11 @@ namespace CFD{
 	};
 
 	struct MeshHierarchy{
-		/*
+
 		 * Indices of the upper and lower bounds of this mesh.
 		 * These are indices with respect to the finest mesh,
 		 * which is where the Stokes equation is solved.
-		 */
+
 		int iLower, iUpper, jLower, jUpper;
 		int level;
 
@@ -333,7 +334,7 @@ namespace CFD{
 		}
 
 
-/*		void updatePolymersAndCalculateStressTensor(double * Udata, double * Sdata){
+		void updatePolymersAndCalculateStressTensor(double * Udata, double * Sdata){
 #ifdef FeneTiming
 			CFD::Timing::callUpdatePolymers++;
 			time_t beginCallUpdatePolymers, endCallUpdatePolymers;
@@ -388,10 +389,11 @@ namespace CFD{
 			time(&endCallUpdatePolymers);
 			CFD::Timing::callUpdatePolymersTime += difftime(endCallUpdatePolymers,beginCallUpdatePolymers);
 #endif
-		}*/
+		}
 
 
 	};
+*/
 
 
 	class FokkerPlanckSolver{
@@ -404,7 +406,7 @@ namespace CFD{
 
 		int n;
 		double deltaX, deltaY;
-		double deltaT, h, offset, D, H, Q0;
+		double deltaT, h, offset, D, H, Q0, lambda;
 
 		CellDoubleArray F;
 
@@ -417,7 +419,7 @@ namespace CFD{
 			delete restrictor;
 			delete solver;
 		}
-		FokkerPlanckSolver(int n, double deltaX, double deltaT, double h, double offset, double D, double H, double Q0){
+		FokkerPlanckSolver(int n, double deltaX, double deltaT, double h, double offset, double D, double H, double Q0, double lambda){
 			this->n = n;
 			this->deltaX = deltaX;
 			this->deltaY = deltaX;
@@ -428,6 +430,7 @@ namespace CFD{
 			this->D = D;
 			this->H = H;
 			this->Q0 = Q0;
+			this->lambda = lambda;
 
 			g = new Circle(h,Q0,offset);
 			stencil = new FENEStencil(g,deltaT,D,H,Q0);
@@ -441,8 +444,53 @@ namespace CFD{
 
 			Range nRange(0,n-1);
 			f.resize(nRange,nRange,g->xRange,g->yRange);
-			f = 1;
+			double A = pow2(g->h)*sum(where(g->cellTypes != COVERED, g->volumeFractions, 0.0));
+			f = 1.0/A;
 		}
+		void solveFokkerPlanck(Array<double,3> & U){
+			Array<double,2> gradU(shape(2,2));
+			TinyVector<int,2> gradUIndex;
+			gradUIndex(0) = 1;
+			gradUIndex(1) = 1;
+			gradU.reindexSelf(gradUIndex);
+
+			int iP, iM, jP, jM;
+			for(int i = 0; i < n; i++){
+				iP = (i + 1 + n) % n;
+				iM = (i - 1 + n) % n;
+				for(int j = 0; j < n; j++){
+					jP = (j + 1 + n) % n;
+					jM = (j - 1 + n) % n;
+
+					gradU(1,1) = (U(iP,j,0) - U(iM,j,0))/(2*deltaX); // Du_11
+					gradU(1,2) = (U(i,jP,0) - U(i,jM,0))/(2*deltaY); // Du_12
+					gradU(2,1) = (U(iP,j,1) - U(iM,j,1))/(2*deltaX); // Du_21
+					gradU(2,2) = (U(i,jP,1) - U(i,jM,1))/(2*deltaY); // Du_22
+
+					stencil->setGradU(gradU);
+					CellDoubleArray fij = f(i,j,g->xRange,g->yRange);
+
+					fij = solver->solve(fij,fij,stencil,2,2,1);
+					f(i,j,g->xRange,g->yRange) = fij;
+				}
+			}
+		}
+
+		void calculateStress(Array<double,3> & S){
+			double S11, S12, S22;
+
+			for(int i = 0; i < n; i++){
+				for(int j = 0; j < n; j++){
+					CellDoubleArray fij = f(i,j,g->xRange,g->yRange);
+
+					stressAtPoint(fij,S11,S12,S22);
+					S(i,j,0) = S11;
+					S(i,j,1) = S12;
+					S(i,j,2) = S22;
+				}
+			}
+		}
+
 		void updatePolymersAndCalculateStressTensor(double * Udata, double * Sdata){
 //			cout << "n = " << n << endl;
 //			cout << "iMin = " << g->iMin << ", iMax = " << g->iMax << endl;
@@ -542,6 +590,9 @@ namespace CFD{
 					}
 				}
 			}
+			S11 *= lambda;
+			S12 *= lambda;
+			S22 *= lambda;
 #ifdef FeneTiming
 			time(&end);
 			CFD::Timing::stressAtPointTime += difftime(end,begin);

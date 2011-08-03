@@ -11,7 +11,7 @@
 #include "MacroscaleObjects.h"
 #include "../Geometry.h"
 
-#define MaterialDerivativeDebug
+//#define MaterialDerivativeDebug
 
 namespace CFD{
 	using namespace Geometry;

@@ -24,12 +24,57 @@ nQ = 30
 # beta = 0.5
 
 ### FENE Parameters ###
-# Diffusion constant
-D = 1.0
-# Spring stiffness
-H = 1.0
-# Maximum extensibility
-Q0 = 1.0
+
+# Set mode for FENE parameters. Currently valid choices are 'free',
+# and 'du'. 'larson' is also below, but not fully implemented yet.
+# These modes all just correspond to different
+# forms of the Fokker-Planck equation given in different sources.
+# Each is described below. The default is 'free'.
+
+FENEMode = free
+
+## 'free' mode parameters
+
+H_free = 1.0				# Spring stiffness
+D_free = 1.0				# Diffusion constant
+Q0_free = 1.0				# Maximum extensibility
+lambda_free = 1.0			# Polymer density
+
+## 'larson' mode parameters
+# Choosing this will set the spring stiffness to
+#		(2*k_B*T/zeta)*(3/(Q0^2))
+# and set the diffusion coefficient to
+#		2*k_B*T/zeta,
+# which are the constants we get from the expressions on pages
+# 142-143 of 'The Structure and Rheology of Complex Fluids'
+# by Larson.
+
+zeta_larson = 1.0			# Bead drag
+T_larson = 25.0				# Temperature
+Q0_larson = 1.0				# Maximum extensibility
+lambda_larson = 2.0			# Polymer density
+
+## 'du' mode parameters
+# Choosing this will set the spring stiffness to
+#		H*2/zeta
+# and set the diffusion coefficient to
+#		2*k_B*T/zeta,
+# which are the constants we get from the expressions in
+# Du et. al: 'Fene dumbbell model and its several linear
+# and nonlinear closure approximations.'
+# The polymeric stress contribution is
+#		lambda*\int F(Q) \otimes Q dQ
+
+H_du = 1.0					# Spring stiffness
+zeta_du = 1.0				# Bead drag
+T_du = 25.0					# Temperature
+Q0_du = 1.0					# Maximum extensibility
+lambda_du = 2.0				# Polymer density
+
+# Boltzmann's constant
+# Default is SI units, can be set to other units by adding a line below.
+# kB = 1.3806488e-23			# J/K (SI)
+
 
 ### Parameters that Becca hasn't explained to me yet.            ###
 ### No guarantee that these are correctly read into the program. ###

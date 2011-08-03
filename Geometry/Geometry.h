@@ -148,7 +148,7 @@ namespace CFD{
 				 * the formula given on Wikipedia:
 				 * http://en.wikipedia.org/wiki/Centroid#Centroid_of_polygon
 				 */
-				else{
+				else if(false){
 					double Cx = 0, Cy = 0, A = 0;
 
 					list<Coord> cellCorners;
@@ -244,6 +244,35 @@ namespace CFD{
 
 					Coord out(Cx,Cy);
 					return out;
+				}
+				else{
+					int uncoveredFaces = 0;
+					std::list<Direction> directions;
+					directions.push_front(N);
+					directions.push_front(E);
+					directions.push_front(S);
+					directions.push_front(W);
+					std::list<Direction>::iterator directionIterator = directions.begin();
+					while(directionIterator != directions.end()){
+						if(faceTypes(i,j)(*directionIterator) != COVERED){
+							uncoveredFaces++;
+						}
+						directionIterator++;
+					}
+					directions.push_front(N);
+					directionIterator = directions.begin();
+
+					std::list<Coord> corners;
+
+					if(uncoveredFaces == 2){
+
+					}
+					else if(uncoveredFaces == 3){
+
+					}
+					else if(uncoveredFaces == 4){
+
+					}
 				}
 			}
 
