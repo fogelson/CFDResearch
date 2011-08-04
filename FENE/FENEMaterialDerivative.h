@@ -69,12 +69,14 @@ namespace CFD{
 
 			//cout << a << endl; a++;
 			// Compute velocities at cell edges
-			setEdgeVelocities(U,u,v);
+			//setEdgeVelocities(U,u,v);
 			//cout << a << endl; a++;
+
 			uM = min(u,0);
 			uP = max(u,0);
 			vM = min(v,0);
 			vP = max(v,0);
+
 			//cout << a << endl; a++;
 
 			Ap = 0;
@@ -83,6 +85,7 @@ namespace CFD{
 			Bm = 0;
 			F = 0;
 			G = 0;
+
 			//cout << a << endl; a++;
 
 
@@ -208,6 +211,56 @@ namespace CFD{
 			Array<double,4> out(Range(0,n-1),Range(0,n-1),grid->xRange,grid->yRange);
 			out = 0;
 			return out;
+		}
+
+		CellDoubleArray copyToSlice(Array<double,4> & f, int i, int j){
+			CellDoubleArray fij = grid->makeCellDoubleArray();
+			for(int q1 = grid->iMin; q1 <= grid->iMax; q1++){
+				for(int q2 = grid->jMin; q2 <= grid->jMax; q2++){
+					fij(q1,q2) = f(i,j,q1,q2);
+				}
+			}
+			return fij;
+		}
+
+		void copyFromSlice(CellDoubleArray & fij, Array<double,4> & f, int i, int j){
+			for(int q1 = grid->iMin; q1 <= grid->iMax; q1++){
+				for(int q2 = grid->jMin; q2 <= grid->jMax; q2++){
+					f(i,j,q1,q2) = fij(q1,q2);
+				}
+			}
+		}
+
+		void advectFromFlat(double deltaT, const Array<double,3> & U, Array<double,4> & f){
+			setEdgeVelocities(U,u,v);
+			//cout << "set edge velocities " << endl;
+			double uMax = max(u), vMax = max(v);
+			double uCFL, vCFL, CFL;
+
+			uCFL = abs(uMax*deltaT/deltaX);
+			vCFL = abs(vMax*deltaT/deltaY);
+			CFL = max(uCFL,vCFL);
+			//cout << "computed CFL: " << CFL << endl;
+			if(CFL >= 0.92){
+				double newDeltaT = 0.9*deltaT/CFL;
+				int steps = floor(deltaT/newDeltaT);
+				double remainderDeltaT = deltaT - steps*newDeltaT;
+				//cout << "Advecting " << steps+1 << " times with deltaT = " << newDeltaT;
+				for(int k = 0; k < steps; k++){
+					advectFromFlat(newDeltaT,U,f);
+				}
+				//cout << ", and once with deltaT = " << remainderDeltaT << endl;
+				advectFromFlat(remainderDeltaT,U,f);
+				return;
+			}
+
+			for(int i = grid->iMin; i < grid->iMax; i++){
+				for(int j = grid->jMin; j < grid->jMax; j++){
+					Range all = Range::all();
+					Array<double,2> fij = f(all,all,i,j);
+					advectFlat(deltaT, U, fij);
+				}
+			}
 		}
 
 		void advect(double deltaT, const Array<double,3> & U, Array<double,4> & f){

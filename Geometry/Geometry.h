@@ -54,6 +54,43 @@ namespace CFD{
 		typedef TinyVector<double,9> Coefficients;
 		typedef Array<Coefficients,2> CoefficientArray;
 
+		Direction getCornerDirection(Direction a, Direction b){
+			if(a == N){
+				if(b == E){
+					return NE;
+				}
+				if(b == W){
+					return NW;
+				}
+			}
+			if(a == E){
+				if(b == N){
+					return NE;
+				}
+				if(b == S){
+					return SE;
+				}
+			}
+			if(a == S){
+				if(b == E){
+					return SE;
+				}
+				if(b == W){
+					return SW;
+				}
+			}
+			if(a == W){
+				if(b == N){
+					return NE;
+				}
+				if(b == S){
+					return SW;
+				}
+			}
+			cout << "Tried to return corner of two opposing faces." << endl;
+			return -1;
+		}
+
 /*		class Coefficient{
 		public:
 			int i, j;
@@ -125,6 +162,9 @@ namespace CFD{
 			CellDoubleArray volumeFractions;
 			CellTypeArray cellTypes;
 
+			Array<int,2> numberOfVertices;
+			Array<TinyVector<Coord,5>,2> vertices;
+
 			FaceCoordArray centroids;
 			FaceDoubleArray areaFractions;
 			FaceTypeArray faceTypes;
@@ -132,6 +172,100 @@ namespace CFD{
 
 			int iMin, jMin, iMax, jMax;
 			Range xRange, yRange;
+
+			void countVertices(int i, int j){
+				int out;
+				if(cellTypes(i,j) == REGULAR){
+					out = 4;
+				}
+				if(cellTypes(i,j) == COVERED){
+					out = 0;
+				}
+				else{
+					out = 1;
+					if(faceTypes(i,j)(N) != COVERED){
+						out++;
+					}
+					if(faceTypes(i,j)(E) != COVERED){
+						out++;
+					}
+					if(faceTypes(i,j)(S) != COVERED){
+						out++;
+					}
+					if(faceTypes(i,j)(W) != COVERED){
+						out++;
+					}
+				}
+				numberOfVertices(i,j) = out;
+			}
+			void getVertices(int i, int j){
+				Coord z;
+				z(0) = 0;
+				z(1) = 0;
+				vertices(i,j) = z;
+				int current = 0;
+				int n = numberOfVertices(i,j);
+				bool addedN = false, addedE = false, addedS = false, addedW = false;
+				if(faceTypes(i,j)(N) != COVERED){
+					double distanceToVertex = (h/2)*areaFractions(i,j)(N);
+					if(!addedW){
+						vertices(i,j)(current)(0) = centroids(i,j)(N)(0) - distanceToVertex;
+						vertices(i,j)(current)(1) = centroids(i,j)(N)(1);
+						current++;
+					}
+					if(!addedE){
+						vertices(i,j)(current)(0) = centroids(i,j)(N)(0) + distanceToVertex;
+						vertices(i,j)(current)(1) = centroids(i,j)(N)(1);
+						current++;
+					}
+					addedN = true;
+				}
+				if(faceTypes(i,j)(E) != COVERED){
+					double distanceToVertex = (h/2)*areaFractions(i,j)(E);
+					if(!addedN){
+						vertices(i,j)(current)(0) = centroids(i,j)(E)(0);
+						vertices(i,j)(current)(1) = centroids(i,j)(E)(1) + distanceToVertex;
+						current++;
+					}
+					if(!addedS){
+						vertices(i,j)(current)(0) = centroids(i,j)(E)(0);
+						vertices(i,j)(current)(1) = centroids(i,j)(E)(1) - distanceToVertex;
+						current++;
+					}
+					addedE = true;
+				}
+				if(faceTypes(i,j)(S) != COVERED){
+					double distanceToVertex = (h/2)*areaFractions(i,j)(S);
+					if(!addedE){
+						vertices(i,j)(current)(0) = centroids(i,j)(S)(0) + distanceToVertex;
+						vertices(i,j)(current)(1) = centroids(i,j)(S)(1);
+						current++;
+					}
+					if(!addedW){
+						vertices(i,j)(current)(0) = centroids(i,j)(S)(0) - distanceToVertex;
+						vertices(i,j)(current)(1) = centroids(i,j)(S)(1);
+						current++;
+					}
+					addedS = true;
+				}
+				if(faceTypes(i,j)(W) != COVERED){
+					double distanceToVertex = (h/2)*areaFractions(i,j)(W);
+					if(!addedS){
+						vertices(i,j)(current)(0) = centroids(i,j)(W)(0);
+						vertices(i,j)(current)(1) = centroids(i,j)(W)(1) - distanceToVertex;
+						current++;
+					}
+					if(!addedN){
+						vertices(i,j)(current)(0) = centroids(i,j)(W)(0);
+						vertices(i,j)(current)(1) = centroids(i,j)(W)(1) + distanceToVertex;
+						current++;
+					}
+					addedW = true;
+				}
+				if(current > n){
+					cout << "Error. Added to many vertices in cell " << i << ", " << j << endl;
+				}
+			}
 
 			CellDoubleArray makeCellDoubleArray(){
 				CellDoubleArray c;
@@ -148,131 +282,26 @@ namespace CFD{
 				 * the formula given on Wikipedia:
 				 * http://en.wikipedia.org/wiki/Centroid#Centroid_of_polygon
 				 */
-				else if(false){
-					double Cx = 0, Cy = 0, A = 0;
-
-					list<Coord> cellCorners;
-
-					Coord NW, NE, SW, SE;
-					bool addedNW = false, addedNE = false, addedSW = false, addedSE = false;
-
-					if(faceTypes(i,j)(N) != COVERED){
-						Coord c1, c2;
-						c1(0) = centroids(i,j)(N)(0) - (h/2)*areaFractions(i,j)(N);
-						c1(1) = centroids(i,j)(N)(1);
-
-						c2(0) = centroids(i,j)(N)(0) + (h/2)*areaFractions(i,j)(N);
-						c2(1) = centroids(i,j)(N)(1);
-
-						cellCorners.push_back(c1);
-						cellCorners.push_back(c2);
-					}
-					if(faceTypes(i,j)(E) != COVERED){
-						Coord c1, c2;
-						c1(0) = centroids(i,j)(E)(0);
-						c1(1) = centroids(i,j)(E)(1) + (h/2)*areaFractions(i,j)(E);
-
-						c1(0) = centroids(i,j)(E)(0);
-						c1(1) = centroids(i,j)(E)(1) - (h/2)*areaFractions(i,j)(E);
-
-						cellCorners.push_back(c1);
-						cellCorners.push_back(c2);
-					}
-					if(faceTypes(i,j)(S) != COVERED){
-						Coord c1, c2;
-						c1(0) = centroids(i,j)(S)(0) + (h/2)*areaFractions(i,j)(S);
-						c1(1) = centroids(i,j)(S)(1);
-
-						c1(0) = centroids(i,j)(S)(0) - (h/2)*areaFractions(i,j)(S);
-						c1(1) = centroids(i,j)(S)(1);
-
-						cellCorners.push_back(c1);
-						cellCorners.push_back(c2);
-					}
-					if(faceTypes(i,j)(W) != COVERED){
-						Coord c1, c2;
-						c1(0) = centroids(i,j)(W)(0);
-						c1(1) = centroids(i,j)(W)(1) - (h/2)*areaFractions(i,j)(W);
-
-						c1(0) = centroids(i,j)(W)(0);
-						c1(1) = centroids(i,j)(W)(1) + (h/2)*areaFractions(i,j)(W);
-
-						cellCorners.push_back(c1);
-						cellCorners.push_back(c2);
-					}
-					// Add extra copy of the first corner
-					cellCorners.push_back(cellCorners.front());
-
-					list<Coord>::iterator it;
-					it = cellCorners.begin();
-					Coord c1, c2;
-					c2 = *it;
-					it++;
-					/*
-					 * Signed area A:
-					 * A = (1/2)\sum_{i=0}^{n-1} (x_i y_{i+1} - x_{i+1} y_i)
-					 *
-					 * Where the vertices (x_i,y_i) are numbered in order around the
-					 * perimeter, and where (x_0,y_0) = (x_n,y_n).
-					 */
-					while(it != cellCorners.end()){
-						c1 = c2;
-						c2 = *it;
-						A += c1(0)*c2(1) - c2(0)*c1(1);
-						it++;
+				else{
+					double A = 0;
+					for(int k = 0; k < numberOfVertices(i,j); k++){
+						int kP = (k + 1) % numberOfVertices(i,j);
+						A += vertices(i,j)(k)(0)*vertices(i,j)(kP)(1) - vertices(i,j)(kP)(0)*vertices(i,j)(k)(1);
 					}
 					A = A/2;
-
-					it = cellCorners.begin();
-					c2 = *it;
-					it++;
-					/*
-					 * C_x = (1/(6A))\sum_{i=0}^{n-1} (x_i + x_{i+1})(x_i y_{i+1} - x_{i+1} y_i)
-					 * C_y = (1/(6A))\sum_{i=0}^{n-1} (y_i + y_{i+1})(x_i y_{i+1} - x_{i+1} y_i)
-					 */
-					while(it != cellCorners.end()){
-						c1 = c2;
-						c2 = *it;
-
-						Cx += (c1(0) + c2(0))*(c1(0)*c2(1) - c2(0)*c1(1));
-						Cy += (c1(1) + c2(1))*(c1(0)*c2(1) - c2(0)*c1(1));
-
-						it++;
+					double Cx = 0, Cy = 0;
+					for(int k = 0; k < numberOfVertices(i,j); k++){
+						int kP = (k + 1) % numberOfVertices(i,j);
+						double temp = vertices(i,j)(k)(0)*vertices(i,j)(kP)(1) - vertices(i,j)(kP)(0)*vertices(i,j)(k)(1);
+						Cx += (vertices(i,j)(k)(0) + vertices(i,j)(kP)(0))*temp;
+						Cy += (vertices(i,j)(k)(1) + vertices(i,j)(kP)(1))*temp;
 					}
 					Cx = Cx/(6*A);
 					Cy = Cy/(6*A);
-
-					Coord out(Cx,Cy);
+					Coord out;
+					out(0) = Cx;
+					out(1) = Cy;
 					return out;
-				}
-				else{
-					int uncoveredFaces = 0;
-					std::list<Direction> directions;
-					directions.push_front(N);
-					directions.push_front(E);
-					directions.push_front(S);
-					directions.push_front(W);
-					std::list<Direction>::iterator directionIterator = directions.begin();
-					while(directionIterator != directions.end()){
-						if(faceTypes(i,j)(*directionIterator) != COVERED){
-							uncoveredFaces++;
-						}
-						directionIterator++;
-					}
-					directions.push_front(N);
-					directionIterator = directions.begin();
-
-					std::list<Coord> corners;
-
-					if(uncoveredFaces == 2){
-
-					}
-					else if(uncoveredFaces == 3){
-
-					}
-					else if(uncoveredFaces == 4){
-
-					}
 				}
 			}
 
@@ -534,6 +563,8 @@ namespace CFD{
 				faceTypes.resize(xRange,yRange);
 				outwardNormals.resize(xRange,yRange);
 				cellCentroids.resize(xRange,yRange);
+				numberOfVertices.resize(xRange,yRange);
+				vertices.resize(xRange,yRange);
 
 				for(int i = 1; i <= iMax; i++){
 					for(int j = 1; j <= jMax; j++){
@@ -751,6 +782,8 @@ namespace CFD{
 				for(int i = 1; i <= iMax; i++){
 					for(int j = 1; j <= jMax; j++){
 						volumeFractions(i,j) = calculateVolumeFraction(i,j);
+						countVertices(i,j);
+						getVertices(i,j);
 						cellCentroids(i,j) = calculateCellCentroid(i,j);
 					}
 				}

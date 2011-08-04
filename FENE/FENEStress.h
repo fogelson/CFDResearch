@@ -446,6 +446,8 @@ namespace CFD{
 			f.resize(nRange,nRange,g->xRange,g->yRange);
 			double A = pow2(g->h)*sum(where(g->cellTypes != COVERED, g->volumeFractions, 0.0));
 			f = 1.0/A;
+
+			cout << "f has size " << f.shape() << endl;
 		}
 		void solveFokkerPlanck(Array<double,3> & U){
 			Array<double,2> gradU(shape(2,2));
@@ -581,7 +583,8 @@ namespace CFD{
 			for(int i = g->iMin; i <= g->iMax; i++){
 				for(int j = g->jMin; j <= g->jMax; j++){
 					if(g->isUncovered(i,j)){
-						Coord Q = g->centers(i,j);// g->cellCentroids(i,j);
+						//Coord Q = g->centers(i,j);
+						Coord Q = g->cellCentroids(i,j);
 						double dQ = (g->volumeFractions(i,j))*pow2(g->h);
 
 						S11 += f(i,j)*F(i,j)*pow2(Q(0))*dQ;
@@ -606,8 +609,9 @@ namespace CFD{
 			for(int i = g->iMin; i <= g->iMax; i++){
 				for(int j = g->jMin; j <= g->jMax; j++){
 					if(g->isUncovered(i,j)){
-						double Q = magnitude(g->centers(i,j));//magnitude(g->cellCentroids(i,j));
-						Q = min(Q0-h/10.0,Q);
+						//double Q = magnitude(g->centers(i,j));//magnitude(g->cellCentroids(i,j));
+						//Q = min(Q0-h/10.0,Q);
+						double Q = magnitude(g->cellCentroids(i,j));
 						F(i,j) = H/(1 - pow2(Q/Q0));
 						//F(i,j) = H*magnitude(g->centers(i,j));
 					}

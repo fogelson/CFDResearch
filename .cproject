@@ -25,7 +25,6 @@
 <tool id="cdt.managedbuild.tool.macosx.c.linker.macosx.base.836469927" name="MacOS X C Linker" superClass="cdt.managedbuild.tool.macosx.c.linker.macosx.base"/>
 <tool command="g++" id="cdt.managedbuild.tool.macosx.cpp.linker.macosx.base.759830409" name="MacOS X C++ Linker" superClass="cdt.managedbuild.tool.macosx.cpp.linker.macosx.base">
 <option id="macosx.cpp.link.option.libs.2107880813" name="Libraries (-l)" superClass="macosx.cpp.link.option.libs" valueType="libs">
-<listOptionValue builtIn="false" value="blitz"/>
 <listOptionValue builtIn="false" value="fftw"/>
 <listOptionValue builtIn="false" value="lapackpp"/>
 </option>

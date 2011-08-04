@@ -518,6 +518,7 @@ int main(int argc, char *argv[]) {
 		 *    of the Fokker-Planck equation, which advects it with the fluid velocity.
 		 */
 
+		advect.advectFromFlat(dt,Uarray,fps.f);
 //		advect.advect(dt,Uarray,fps.f);
 
 		/*
@@ -526,6 +527,7 @@ int main(int argc, char *argv[]) {
 		 */
 
 		fps.calculateStress(Sarray);
+		//cout << "Max of S: " << max(Sarray) << endl;
 
 		/* Save the current iteration if it is a savetime */
 		if ((iterations % Record_iterations) == 0) {
@@ -536,7 +538,7 @@ int main(int argc, char *argv[]) {
 			Save_U_S(U, filename, 2);
 			sprintf(filename, "%s/S%3.3f.dat", dirname, time);
 
-			Get_U_S(S, S_hat_Re, S_hat_Im, 3);
+			//Get_U_S(S, S_hat_Re, S_hat_Im, 3);
 
 			Save_U_S(S, filename, 3);
 			//cout << "bef if tracer " << endl;
@@ -668,11 +670,13 @@ int main(int argc, char *argv[]) {
 				}
 			}
 		}*/
-/*
-		cout << "Max velocity value is: " << max(Uarray) << endl;
+
+		//cout << "Max velocity value is: " << max(Uarray) << endl;
 
 		// Advect Fokker-Planck solutions with fluid
-		advect.advect(dt,Uarray,fps.f);*/
+/*		if(time >= 10){
+			advect.advect(dt,Uarray,fps.f);
+		}*/
 
 		//cout << "bef if tracer3a " << endl;
 		iterations += 1;
