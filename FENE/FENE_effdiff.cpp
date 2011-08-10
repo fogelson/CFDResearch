@@ -71,12 +71,12 @@ using namespace std;
 
 int N;
 double dt;
-double Wi;
+//double Wi;
 double NU;
 int N2;
 int KK;
-double reciprocal_Wi;
-double Beta;
+//double reciprocal_Wi;
+//double Beta;
 int start_w_zero;
 int pertid;
 int timedep_F;
@@ -219,7 +219,6 @@ int main(int argc, char *argv[]) {
 	PI2 = 8. * atan((double) 1.);
 
 	N = 512;
-	Wi = 0.1;
 	NU = 0.;
 	start_w_zero = true;
 	pertid = false;
@@ -273,9 +272,6 @@ int main(int argc, char *argv[]) {
 	//       Record_iterations = int(saveTime * 50 + EPS);
 	N2 = N * N;
 	KK = N / 2;
-	reciprocal_Wi = 1. / Wi;
-	if (betaOn)
-		Beta = 1. / (2. * Wi);
 	if (turnfivept_on)
 		fivept_on = true;
 
@@ -358,7 +354,6 @@ int main(int argc, char *argv[]) {
 	/////////////////////////////////////////////////////////////////////////
 	///////////////////--- STEP 1. Initialization ---////////////////////////
 	/////////////////////////////////////////////////////////////////////////
-	cout << " Wi = " << Wi << endl;
 	cout << " N = " << N << endl;
 	cout << " nu = " << NU << endl;
 	cout << " dt = " << dt << endl;
@@ -835,11 +830,11 @@ void initialization_Spert(double *S) {
 
 	fftw_complex *g3 = (fftw_complex *) calloc(N2, sizeof(fftw_complex));
 
-	if (Wi < 10)
+/*	if (Wi < 10)
 		wi_mult = 1;
 	else
 		wi_mult = Wi / 10.;
-
+*/
 	start_val = 60;
 	cout << "start_val = " << start_val << endl;
 	srand(start_val);
@@ -1042,6 +1037,14 @@ void get_fivept_tr(double *tr, double *tr_fivept) {
 void Get_F_hat(double *F_hat_Re, double *F_hat_Im) {
 	double mesh_size = PI2 / N;
 
+	Array<fftw_complex,3> F;
+	CFD::VelocityArrayOrder<3> FOrder;
+	F.setStorage(FOrder);
+	F.resize(N,N);
+
+	Range all = Range::all();
+	(F(all,all,0)).data();
+
 	int i, j, k, index1, index2;
 	double x, y;
 
@@ -1070,7 +1073,7 @@ void Get_F_hat(double *F_hat_Re, double *F_hat_Im) {
 		//  save them.
 		index1 = 0;
 		index2 = k;
-		for (i = 0; i < N; i++)
+		for (i = 0; i < N; i++){
 			for (j = 0; j < N; j++) {
 				F_hat_Re[index2] = F12[index1].re / N2;
 				F_hat_Im[index2] = F12[index1].im / N2;
@@ -1078,6 +1081,7 @@ void Get_F_hat(double *F_hat_Re, double *F_hat_Im) {
 				index1 += 1;
 				index2 += 2;
 			}
+		}
 	}
 
 	// Set F to be zero for the locations (KK, i) and (i, KK).
@@ -1212,11 +1216,11 @@ void Get_P_U_hat(double *P_hat_Re, double *P_hat_Im, double *U_hat_Re,
 			else
 				denominator = ki2 + kj2;
 
-			Re_part = Beta * (S_hat_Re[index3] * ki2 + 2 * S_hat_Re[index3 + 1]
+			Re_part = (S_hat_Re[index3] * ki2 + 2 * S_hat_Re[index3 + 1]
 			                                                        * kij + S_hat_Re[index3 + 2] * kj2) - ki * F_hat_Im[index2]
 			                                                                                                            - kj * F_hat_Im[index2 + 1];
 
-			Im_part = Beta * (S_hat_Im[index3] * ki2 + 2 * S_hat_Im[index3 + 1]
+			Im_part = (S_hat_Im[index3] * ki2 + 2 * S_hat_Im[index3 + 1]
 			                                                        * kij + S_hat_Im[index3 + 2] * kj2) + ki * F_hat_Re[index2]
 			                                                                                                            + kj * F_hat_Re[index2 + 1];
 
@@ -1230,12 +1234,11 @@ void Get_P_U_hat(double *P_hat_Re, double *P_hat_Im, double *U_hat_Re,
 				else
 					kij = kj;
 
-				Re_part = P_hat_Im[index1] * kij - Beta * (S_hat_Im[index3 + k]
+				Re_part = P_hat_Im[index1] * kij - (S_hat_Im[index3 + k]
 				                                                    * ki + S_hat_Im[index3 + k + 1] * kj) - F_hat_Re[index2
 				                                                                                                     + k];
 
-				Im_part = -P_hat_Re[index1] * kij + Beta
-						* (S_hat_Re[index3 + k] * ki + S_hat_Re[index3 + k + 1]
+				Im_part = -P_hat_Re[index1] * kij + (S_hat_Re[index3 + k] * ki + S_hat_Re[index3 + k + 1]
 						                                        * kj) - F_hat_Im[index2 + k];
 
 				U_hat_Re[index2 + k] = Re_part / denominator;
@@ -1554,37 +1557,31 @@ void update_S_hat(double *Re_newS_hat, double *Im_newS_hat, double *S_hat_Re,
 			//  For S1.
 			Re_newS_hat[index3] = -(Re_UgradS_hat[index6]
 			                                      + Re_UgradS_hat[index6 + 3]) + 2 * (Re_gradUS_hat[index8]
-			                                                                                        + Re_gradUS_hat[index8 + 4]) - reciprocal_Wi
-			                                                                                        * S_hat_Re[index3];
+			                                                                                        + Re_gradUS_hat[index8 + 4]) - S_hat_Re[index3];
 
 			Im_newS_hat[index3] = -(Im_UgradS_hat[index6]
 			                                      + Im_UgradS_hat[index6 + 3]) + 2 * (Im_gradUS_hat[index8]
-			                                                                                        + Im_gradUS_hat[index8 + 4]) - reciprocal_Wi
-			                                                                                        * S_hat_Im[index3];
+			                                                                                        + Im_gradUS_hat[index8 + 4]) - S_hat_Im[index3];
 
 			//  For S2.
 			Re_newS_hat[index3 + 1] = -(Re_UgradS_hat[index6 + 1]
 			                                          + Re_UgradS_hat[index6 + 4]) + (Re_gradUS_hat[index8 + 1]
 			                                                                                        + Re_gradUS_hat[index8 + 5] + Re_gradUS_hat[index8 + 2]
-			                                                                                                                                    + Re_gradUS_hat[index8 + 6]) - reciprocal_Wi
-			                                                                                                                                    * S_hat_Re[index3 + 1];
+			                                                                                                                                    + Re_gradUS_hat[index8 + 6]) - S_hat_Re[index3 + 1];
 
 			Im_newS_hat[index3 + 1] = -(Im_UgradS_hat[index6 + 1]
 			                                          + Im_UgradS_hat[index6 + 4]) + (Im_gradUS_hat[index8 + 1]
 			                                                                                        + Im_gradUS_hat[index8 + 5] + Im_gradUS_hat[index8 + 2]
-			                                                                                                                                    + Im_gradUS_hat[index8 + 6]) - reciprocal_Wi
-			                                                                                                                                    * S_hat_Im[index3 + 1];
+			                                                                                                                                    + Im_gradUS_hat[index8 + 6]) - S_hat_Im[index3 + 1];
 
 			//  For S3.
 			Re_newS_hat[index3 + 2] = -(Re_UgradS_hat[index6 + 2]
 			                                          + Re_UgradS_hat[index6 + 5]) + 2 * (Re_gradUS_hat[index8
-			                                                                                            + 3] + Re_gradUS_hat[index8 + 7]) - reciprocal_Wi
-			                                                                                            * S_hat_Re[index3 + 2];
+			                                                                                            + 3] + Re_gradUS_hat[index8 + 7]) - S_hat_Re[index3 + 2];
 
 			Im_newS_hat[index3 + 2] = -(Im_UgradS_hat[index6 + 2]
 			                                          + Im_UgradS_hat[index6 + 5]) + 2 * (Im_gradUS_hat[index8
-			                                                                                            + 3] + Im_gradUS_hat[index8 + 7]) - reciprocal_Wi
-			                                                                                            * S_hat_Im[index3 + 2];
+			                                                                                            + 3] + Im_gradUS_hat[index8 + 7]) - S_hat_Im[index3 + 2];
 
 			index1 += 1;
 			index3 += 3;
@@ -1592,12 +1589,10 @@ void update_S_hat(double *Re_newS_hat, double *Im_newS_hat, double *S_hat_Re,
 			index8 += 8;
 		}
 	Re_newS_hat[0] = -(Re_UgradS_hat[0] + Re_UgradS_hat[3]) + 2
-			* (Re_gradUS_hat[0] + Re_gradUS_hat[4]) - reciprocal_Wi
-			* (S_hat_Re[0] - 1.0);
+			* (Re_gradUS_hat[0] + Re_gradUS_hat[4]) - (S_hat_Re[0] - 1.0);
 
 	Re_newS_hat[2] = -(Re_UgradS_hat[2] + Re_UgradS_hat[5]) + 2
-			* (Re_gradUS_hat[3] + Re_gradUS_hat[7]) - reciprocal_Wi
-			* (S_hat_Re[2] - 1.0);
+			* (Re_gradUS_hat[3] + Re_gradUS_hat[7]) - (S_hat_Re[2] - 1.0);
 
 	//  Free the assigned arrays.
 	free(Re_gradUS_hat);
@@ -1766,12 +1761,10 @@ void readConfigFile(){
 	offset = offsetFrac*h;
 
 	config.readInto(tr_pts,"trpts");
-	config.readInto(Wi,"wi");
 	config.readInto(NU,"nu");
 	if(config.readInto(dt,"deltaT")){
 		dtOn = false;
 	}
-	config.readInto(Beta,"beta");
 	config.readInto(pertid,"pi");
 	bool timedep_Fbool;
 	if(config.readInto(timedep_Fbool,"td")){
@@ -1855,7 +1848,7 @@ void readParameters(int argc, char **argv) {
 					exit(1);
 				}
 			}
-			else if (strcmp(*margv, "-wi") == 0) {
+/*			else if (strcmp(*margv, "-wi") == 0) {
 				margv++;
 				if (margv == NULL || (jjj = sscanf(*margv, "%lf", &Wi))
 						!= 1) {
@@ -1863,7 +1856,7 @@ void readParameters(int argc, char **argv) {
 							"error in parameters: -wi value , value is double\n");
 					exit(1);
 				}
-			}
+			}*/
 			else if (strcmp(*margv, "-nu") == 0) {
 				margv++;
 				if (margv == NULL || (jjj = sscanf(*margv, "%lf",
@@ -1883,7 +1876,7 @@ void readParameters(int argc, char **argv) {
 				}
 				dtOn = false;
 			}
-			else if (strcmp(*margv, "-beta") == 0) {
+/*			else if (strcmp(*margv, "-beta") == 0) {
 				margv++;
 				if (margv == NULL || (jjj = sscanf(*margv,
 						"%lf", &Beta)) != 1) {
@@ -1892,7 +1885,7 @@ void readParameters(int argc, char **argv) {
 					exit(1);
 				}
 				betaOn = false;
-			}
+			}*/
 			else if (strcmp(*margv, "-pi") == 0) {
 				pertid = true;
 
