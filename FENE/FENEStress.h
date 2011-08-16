@@ -472,7 +472,11 @@ namespace CFD{
 					stencil->setGradU(gradU);
 					CellDoubleArray fij = f(i,j,g->xRange,g->yRange);
 
-					fij = solver->solve(fij,fij,stencil,2,2,1);
+					//void solve(CellDoubleArray & u, CellDoubleArray & f, Stencil * stencil, int v1, int v2, int its){
+
+					CellDoubleArray rhs = g->makeCellDoubleArray();
+					solver->solve(fij,rhs,stencil,2,2,1);
+					//fij = solver->solve(fij,fij,stencil,2,2,1);
 					f(i,j,g->xRange,g->yRange) = fij;
 				}
 			}
@@ -493,7 +497,7 @@ namespace CFD{
 			}
 		}
 
-		void updatePolymersAndCalculateStressTensor(double * Udata, double * Sdata){
+/*		void updatePolymersAndCalculateStressTensor(double * Udata, double * Sdata){
 //			cout << "n = " << n << endl;
 //			cout << "iMin = " << g->iMin << ", iMax = " << g->iMax << endl;
 #ifdef FeneTiming
@@ -570,7 +574,7 @@ namespace CFD{
 			time(&endCallUpdatePolymers);
 			CFD::Timing::callUpdatePolymersTime += difftime(endCallUpdatePolymers,beginCallUpdatePolymers);
 #endif
-		}
+		}*/
 		void stressAtPoint(CellDoubleArray &f, double &S11, double &S12, double &S22){
 #ifdef FeneTiming
 			CFD::Timing::stressAtPoint++;
@@ -612,7 +616,7 @@ namespace CFD{
 						//double Q = magnitude(g->centers(i,j));//magnitude(g->cellCentroids(i,j));
 						//Q = min(Q0-h/10.0,Q);
 						double Q = magnitude(g->cellCentroids(i,j));
-						F(i,j) = H/(1 - pow2(Q/Q0));
+						F(i,j) = H*Q;//H/(1 - pow2(Q/Q0));
 						//F(i,j) = H*magnitude(g->centers(i,j));
 					}
 				}

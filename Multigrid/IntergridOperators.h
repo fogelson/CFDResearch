@@ -30,7 +30,7 @@ namespace CFD{
 			}
 			virtual void doInterpolate(CellDoubleArray & uF, CellDoubleArray & uC, Grid * fine, Grid * coarse) = 0;
 		};
-
+/*
 		class InjectiveInterpolator : public Interpolator{
 		public:
 			void doInterpolate(CellDoubleArray &uF, CellDoubleArray &uC, Grid *fine, Grid *coarse){
@@ -47,7 +47,7 @@ namespace CFD{
 					}
 				}
 			}
-		};
+		};*/
 
 		class BilinearInterpolator : public Interpolator{
 			double regularStencil(double near, double middle1, double middle2, double far){
@@ -185,15 +185,16 @@ namespace CFD{
 				}*/
 				CellDoubleArray out(fine->xRange,fine->yRange);
 				out = 1.0*(fine->cellTypes);
-				return uF;
+				//return uF;
 			}
 		};
 
 
 
+/*
 		class BilinearInterpolatorDumbButtface : public Interpolator{
 			double bilinearExtrapolation(double a, double b, double c, double d){
-				/*			   e
+							   e
 				 * 			   |
 				 * 			a------------b
 				 * 			|  |		 |
@@ -202,13 +203,13 @@ namespace CFD{
 				 *    		|  |		 |
 				 *    		c------------d
 				 *
-				 */
+
 
 				return (15*a + 5*b - 3*c - d)/16;
 			}
 
 			double linearExtrapolation(double p, double q){
-				/*
+
 				 * 				*
 				 * 			   /
 				 * 		0-----p
@@ -216,7 +217,7 @@ namespace CFD{
 				 *      |  /  |
 				 *      |/	  |
 				 *      q-----0
-				 */
+
 
 				return (5*p - q)/4;
 			}
@@ -483,7 +484,7 @@ namespace CFD{
 				}
 				//cout << uF << endl;
 
-/*				for(int iC = iCMin; iC <= iCMax; iC++){
+				for(int iC = iCMin; iC <= iCMax; iC++){
 					for(int jC = jCMin; jC <= jCMax; jC++){
 						uF(2*iC,2*jC) += 9*uC(iC,jC);
 						uF(2*iC,2*jC-1) += 9*uC(iC,jC);
@@ -509,10 +510,11 @@ namespace CFD{
 						uF(2*iC+1,2*jC-2) += uC(iC,jC);
 						uF(2*iC-2,2*jC-2) += uC(iC,jC);
 					}
-				}*/
+				}
 				return uF;
 			}
 		};
+*/
 
 
 		class Restrictor{

@@ -51,13 +51,13 @@ namespace CFD{
 			Interpolator * interpolator;
 			Restrictor * restrictor;
 
-			CellDoubleArray vCycle(CellDoubleArray u0, CellDoubleArray f, Stencil * fineStencil, int v1, int v2){
+			CellDoubleArray vCycle(CellDoubleArray & u0, CellDoubleArray & rhs, Stencil * fineStencil, int v1, int v2){
 				Grid * fine = fineStencil->getGrid();
 				CellDoubleArray u = fine->makeCellDoubleArray();
-				vCycle(u,u0,f,fineStencil,v1,v2);
+				vCycle(u,u0,rhs,fineStencil,v1,v2);
 				return u;
 			}
-			void vCycle(CellDoubleArray & u, CellDoubleArray u0, CellDoubleArray f, Stencil * fineStencil, int v1, int v2){
+			void vCycle(CellDoubleArray & u, CellDoubleArray & u0, CellDoubleArray & rhs, Stencil * fineStencil, int v1, int v2){
 /*ifdef FeneTiming
 				std::clock_t beginVCycle, endVCycle;
 				beginVCycle = std::clock();
@@ -97,7 +97,7 @@ namespace CFD{
 				std::clock_t beginPresmooths, endPresmooths;
 				beginPresmooths = std::clock();
 #endif*/
-				smoother->smooth(u,u0,f,fineStencil,v1);
+				smoother->smooth(u,u0,rhs,fineStencil,v1);
 /*ifdef FeneTiming
 				endPresmooths = std::clock();
 				cout << "Presmooth: (" << fine->iMax << " x " << fine->jMax << "): " << endPresmooths - beginPresmooths << endl;
@@ -108,7 +108,7 @@ namespace CFD{
 				beginResidual = std::clock();
 #endif*/
 				Lu = fineStencil->apply(u);
-				rF = f - Lu;
+				rF = rhs - Lu;
 /*ifdef FeneTiming
 				endResidual = std::clock();
 				cout << "Residual: (" << fine->iMax << " x " << fine->jMax << "): " << endResidual - beginResidual << endl;
@@ -146,7 +146,7 @@ namespace CFD{
 				beginPost = std::clock();
 #endif*/
 				uCorrected = u + eF;
-				smoother->smooth(u,uCorrected,f,fineStencil,v2);
+				smoother->smooth(u,uCorrected,rhs,fineStencil,v2);
 /*ifdef FeneTiming
 				endPost = std::clock();
 				cout << "Correct and postsmooth: (" << fine->iMax << " x " << fine->jMax << "): " << endPost - beginPost << endl;
@@ -164,16 +164,17 @@ namespace CFD{
 				this->interpolator = interpolator;
 				this->restrictor = restrictor;
 			}
-			void solve(CellDoubleArray & u, CellDoubleArray u0, CellDoubleArray f, Stencil * stencil, int v1, int v2, int its){
+			void solve(CellDoubleArray & u, CellDoubleArray & rhs, Stencil * stencil, int v1, int v2, int its){
+				CellDoubleArray u0(u.copy());
 				for(int n = 0; n < its; n++){
-					vCycle(u,u0,f,stencil,v1,v2);
+					vCycle(u,u0,rhs,stencil,v1,v2);
 				}
 			}
-			CellDoubleArray solve(CellDoubleArray u0, CellDoubleArray f, Stencil * stencil, int v1, int v2, int its){
-				CellDoubleArray u = stencil->getGrid()->makeCellDoubleArray();
+			/*CellDoubleArray solve(CellDoubleArray & u0, CellDoubleArray & f, Stencil * stencil, int v1, int v2, int its){
+				CellDoubleArray u(u0.copy());
 				solve(u,u0,f,stencil,v1,v2,its);
 				return u;
-			}
+			}*/
 		};
 
 		class MultigridSolver{

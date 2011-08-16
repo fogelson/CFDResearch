@@ -39,6 +39,7 @@ namespace CFD{
 			// Advective speed due to spring forces in the q_1 direction
 			double aSq1(double q1, double q2){
 				double Q = magnitude(q1,q2);
+				return -H*q1;
 				return -H*q1/(1 - pow2(Q/Q0));
 			}
 			double aSq1(Coord c){
@@ -47,6 +48,7 @@ namespace CFD{
 			// And the q_2 direction
 			double aSq2(double q1, double q2){
 				double Q = magnitude(q1,q2);
+				return -H*q2;
 				return -H*q2/(1 - pow2(Q/Q0));
 			}
 			double aSq2(Coord c){

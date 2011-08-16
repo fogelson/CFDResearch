@@ -54,7 +54,7 @@ namespace CFD{
 		typedef TinyVector<double,9> Coefficients;
 		typedef Array<Coefficients,2> CoefficientArray;
 
-		Direction getCornerDirection(Direction a, Direction b){
+/*		Direction getCornerDirection(Direction a, Direction b){
 			if(a == N){
 				if(b == E){
 					return NE;
@@ -89,7 +89,7 @@ namespace CFD{
 			}
 			cout << "Tried to return corner of two opposing faces." << endl;
 			return -1;
-		}
+		}*/
 
 /*		class Coefficient{
 		public:
