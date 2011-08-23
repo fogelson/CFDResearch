@@ -58,105 +58,33 @@ namespace CFD{
 				return u;
 			}
 			void vCycle(CellDoubleArray & u, CellDoubleArray & u0, CellDoubleArray & rhs, Stencil * fineStencil, int v1, int v2){
-/*ifdef FeneTiming
-				std::clock_t beginVCycle, endVCycle;
-				beginVCycle = std::clock();
-#endif*/
 				Grid * fine = fineStencil->getGrid();
 
 				double hF= fine->h;
 				double hC = 2.0*hF;
 
-/*ifdef FeneTiming
-				std::clock_t beginCoarsen, endCoarsen;
-				beginCoarsen = std::clock();
-#endif*/
 				Grid * coarse = fine->coarsen();
 				Stencil * coarseStencil = fineStencil->coarsen();
-/*ifdef FeneTiming
-				endCoarsen = std::clock();
-				cout << "Coarsen: (" << fine->iMax << " x " << fine->jMax << "): " << endCoarsen - beginCoarsen << endl;
-#endif*/
-
-/*ifdef FeneTiming
-				std::clock_t beginMakeArrays, endMakeArrays;
-				beginMakeArrays = std::clock();
-#endif*/
 				CellDoubleArray Lu = fine->makeCellDoubleArray();
 				CellDoubleArray rF = fine->makeCellDoubleArray();
 				CellDoubleArray rC = coarse->makeCellDoubleArray();
 				CellDoubleArray eC = coarse->makeCellDoubleArray();
 				CellDoubleArray eF = fine->makeCellDoubleArray();
 				CellDoubleArray uCorrected = fine->makeCellDoubleArray();
-/*ifdef FeneTiming
-				endMakeArrays = std::clock();
-				cout << "Make Arrays: (" << fine->iMax << " x " << fine->jMax << "): " << endMakeArrays - beginMakeArrays << endl;
-#endif*/
-
-/*ifdef FeneTiming
-				std::clock_t beginPresmooths, endPresmooths;
-				beginPresmooths = std::clock();
-#endif*/
 				smoother->smooth(u,u0,rhs,fineStencil,v1);
-/*ifdef FeneTiming
-				endPresmooths = std::clock();
-				cout << "Presmooth: (" << fine->iMax << " x " << fine->jMax << "): " << endPresmooths - beginPresmooths << endl;
-#endif*/
-
-/*ifdef FeneTiming
-				std::clock_t beginResidual, endResidual;
-				beginResidual = std::clock();
-#endif*/
 				Lu = fineStencil->apply(u);
 				rF = rhs - Lu;
-/*ifdef FeneTiming
-				endResidual = std::clock();
-				cout << "Residual: (" << fine->iMax << " x " << fine->jMax << "): " << endResidual - beginResidual << endl;
-#endif*/
-
-/*ifdef FeneTiming
-				std::clock_t beginRestrict, endRestrict;
-				beginRestrict = std::clock();
-#endif*/
 				restrictor->doRestrict(rC,rF,fine,coarse);
-/*ifdef FeneTiming
-				endRestrict = std::clock();
-				cout << "Restrict: (" << fine->iMax << " x " << fine->jMax << "): " << endRestrict - beginRestrict << endl;
-#endif*/
 
 				if(coarse->iMax <= 4){
-					smoother->smooth(eC,eC,rC,coarseStencil,32); // 2*(4*4)
+					smoother->smooth(eC,eC,rC,coarseStencil,5000); // 2*(4*4)
 				}
 				else{
 					vCycle(eC, eC, rC, coarseStencil, v1, v2);
 				}
-/*ifdef FeneTiming
-				std::clock_t beginInterp, endInterp;
-				beginInterp = std::clock();
-#endif*/
 				interpolator->doInterpolate(eF, eC, fine, coarse);
-/*ifdef FeneTiming
-				endInterp = std::clock();
-				cout << "Interpolate: (" << fine->iMax << " x " << fine->jMax << "): " << endInterp - beginInterp << endl;
-#endif*/
-
-
-/*ifdef FeneTiming
-				std::clock_t beginPost, endPost;
-				beginPost = std::clock();
-#endif*/
 				uCorrected = u + eF;
 				smoother->smooth(u,uCorrected,rhs,fineStencil,v2);
-/*ifdef FeneTiming
-				endPost = std::clock();
-				cout << "Correct and postsmooth: (" << fine->iMax << " x " << fine->jMax << "): " << endPost - beginPost << endl;
-#endif*/
-
-
-/*ifdef FeneTiming
-				endVCycle = std::clock();
-				cout << "v-cycle with " << fine->iMax << " x " << fine->jMax << ": " << endVCycle - beginVCycle << endl;
-#endif*/
 			}
 		public:
 			StenciledMultigridSolver(StenciledSmoother * smoother, Interpolator * interpolator, Restrictor * restrictor){

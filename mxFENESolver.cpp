@@ -10,6 +10,7 @@
 #include "BlitzMatlab.h"
 
 #include "FENE/FENEStress.h"
+#include "Multigrid/Stencils.h"
 
 using namespace CFD;
 using namespace Multigrid;
@@ -22,12 +23,12 @@ using namespace blitzmatlab;
  */
 
 /* The following command should be invoked from MATLAB:
- * [f] = mxFileTemplate(f0,h,deltaT,D,H,Q0,v1,v1,its,timesteps)
+ * [f] = mxFileTemplate(f0,rhs,h,deltaT,D,H,Q0,v1,v1,its,timesteps)
  */
 
 void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]){
 	// Desired number of inputs and outputs
-	int inputs = 10;
+	int inputs = 11;
 	int outputs = 1;
 
 	/* Check for proper number of arguments. */
@@ -40,33 +41,51 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]){
 
 	double h, deltaT, D, H, Q0, v1, v2, its, timesteps;
 
-	CellDoubleArray f0 = getMxArray(prhs[0]);
+	h = getMxDouble(prhs[2]);
+	deltaT = getMxDouble(prhs[3]);
+	D = getMxDouble(prhs[4]);
+	H = getMxDouble(prhs[5]);
+	Q0 = getMxDouble(prhs[6]);
+	v1 = getMxDouble(prhs[7]);
+	v2 = getMxDouble(prhs[8]);
+	its = getMxDouble(prhs[9]);
+	timesteps = getMxDouble(prhs[10]);
 
-	h = getMxDouble(prhs[1]);
-	deltaT = getMxDouble(prhs[2]);
-	D = getMxDouble(prhs[3]);
-	Q0 = getMxDouble(prhs[4]);
-	v1 = getMxDouble(prhs[5]);
-	v2 = getMxDouble(prhs[6]);
-	its = getMxDouble(prhs[7]);
-	timesteps = getMxDouble(prhs[8]);
-
-	Grid * g = new Circle(h,Q0,h/2);
-	Stencil * s = new FENEStencil(g,deltaT,D,H,Q0);
+	Grid * g = new UnitSquare(h,h/2);
+	//Grid * g = new Circle(h,Q0,h/2);
+	//Stencil * s = new FENEStencil(g,deltaT,D,H,Q0);
+	Stencil * s = new PoissonStencil(g);
+	//Stencil * s = new BackwardEulerDiffusionStencil(g,deltaT,D);
 	Interpolator * interpolator = new BilinearInterpolator();
 	Restrictor * restrictor = new VolumeWeightedRestrictor();
-	StenciledSmoother * smoother = new StenciledFourPointGS();
+	StenciledSmoother * smoother = new StenciledGSLex();
+	//StenciledSmoother * smoother = new StenciledFourPointGS();
 	StenciledMultigridSolver * solver = new StenciledMultigridSolver(smoother,interpolator,restrictor);
+
+	CellDoubleArray f0 = g->makeCellDoubleArray();
+	CellDoubleArray rhs = g->makeCellDoubleArray();
+	f0 = getMxArray(prhs[0]);
+	rhs = getMxArray(prhs[1]);
 
 	CellDoubleArray f = g->makeCellDoubleArray();
 	CellDoubleArray zero = g->makeCellDoubleArray();
 	f = f0;
 
+	//PoissonStencil L(g);
+
 	for(int i = 0; i < timesteps; i++){
-		solver->solve(f,zero,s,v1,v2,its);
+		//smoother->smooth(f,f0,rhs,s,its);
+		CellDoubleArray fullRHS = g->makeCellDoubleArray();
+		//CellDoubleArray Lf = g->makeCellDoubleArray();
+		//Lf = L(f);
+		fullRHS = rhs;// + f;// + (D*deltaT/2)*Lf;
+		//smoother->smooth(f,f0,fullRHS,s,its);
+		solver->solve(f,fullRHS,s,v1,v2,its);
 	}
 
 	// Set output pointers to the desired outputs
+
+	f = where(g->cellTypes == COVERED, mxGetNaN(), f);
 	plhs[0] = setMxArray(f);
 
 	delete g;

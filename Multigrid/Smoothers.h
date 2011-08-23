@@ -49,6 +49,7 @@ namespace CFD{
 						for(int j = g->jMin; j <= g->jMax; j++){
 							if(g->isUncovered(i,j)){
 								double uC, uN, uS, uE, uW, uNE, uNW, uSE, uSW;
+
 								if(g->isRegular(i,j)){
 									uC = u(i,j);
 									uN = u(i,j+1);

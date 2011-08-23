@@ -173,6 +173,18 @@ namespace CFD{
 			int iMin, jMin, iMax, jMax;
 			Range xRange, yRange;
 
+			void resizeAll(){
+				centers.resize(xRange,yRange);
+				volumeFractions.resize(xRange,yRange);
+				cellTypes.resize(xRange,yRange);
+				centroids.resize(xRange,yRange);
+				areaFractions.resize(xRange,yRange);
+				faceTypes.resize(xRange,yRange);
+				outwardNormals.resize(xRange,yRange);
+				cellCentroids.resize(xRange,yRange);
+				numberOfVertices.resize(xRange,yRange);
+				vertices.resize(xRange,yRange);
+			}
 			void countVertices(int i, int j){
 				int out;
 				if(cellTypes(i,j) == REGULAR){
@@ -826,6 +838,330 @@ namespace CFD{
 			}
 		};
 
+		class UnitSquareBetterBoundaries : public Grid{
+			void make(){
+				double width = 1 + offset;
+				iMin = 1;
+				jMin = 1;
+				iMax = ceil(width/h);
+				jMax = ceil(width/h);
+				iMax = iMax + (iMax % 2);
+				jMax = jMax + (jMax % 2);
+				xRange.setRange(1,iMax,1);
+				yRange.setRange(1,jMax,1);
+
+				resizeAll();
+
+				for(int i = 1; i <= iMax; i++){
+					for(int j = 1; j <= jMax; j++){
+						cellTypes(i,j) = REGULAR;
+						faceTypes(i,j) = REGULAR;
+						faceTypes(i,j)(B) = COVERED;
+						volumeFractions(i,j) = 1;
+						areaFractions(i,j) = 1;
+						areaFractions(i,j)(B) = 0;
+						outwardNormals(i,j) = 0;
+
+						centers(i,j)(0) = (i-1)*h + (h/2) - offset;
+						centers(i,j)(1) = (j-1)*h + (h/2) - offset;
+
+						centroids(i,j)(N)(0) = centers(i,j)(0);
+						centroids(i,j)(N)(1) = getCellEdge(i,j,N);
+
+						centroids(i,j)(S)(0) = centers(i,j)(0);
+						centroids(i,j)(S)(1) = getCellEdge(i,j,S);
+
+						centroids(i,j)(E)(0) = getCellEdge(i,j,E);
+						centroids(i,j)(E)(1) = centers(i,j)(1);
+
+						centroids(i,j)(W)(0) = getCellEdge(i,j,W);
+						centroids(i,j)(W)(1) = centers(i,j)(1);
+
+						if(!contains(centers(i,j))
+								&&
+								((getCellEdge(i,j,N) < 0 || getCellEdge(i,j,N) > 1)
+								&& (getCellEdge(i,j,S) < 0 || getCellEdge(i,j,S) > 1))
+								||
+								((getCellEdge(i,j,E) < 0 || getCellEdge(i,j,E) > 1)
+								&& (getCellEdge(i,j,W) < 0 || getCellEdge(i,j,W) > 1))){
+							cellTypes(i,j) = COVERED;
+							faceTypes(i,j) = COVERED;
+							volumeFractions(i,j) = 0;
+							areaFractions(i,j) = 0;
+							outwardNormals(i,j) = 0;
+						}
+						else{
+							if(abs(centers(i,j)(0)) < h/2){
+								if(abs(centers(i,j)(1)) < h/2){ // i = 1, j = 1
+									cellTypes(i,j) = IRREGULAR;
+
+									faceTypes(i,j)(S) = COVERED;
+									areaFractions(i,j)(S) = 0;
+									centroids(i,j)(S) = 0;
+
+									faceTypes(i,j)(W) = COVERED;
+									areaFractions(i,j)(W) = 0;
+									centroids(i,j)(W) = 0;
+
+									faceTypes(i,j)(N) = IRREGULAR;
+									centroids(i,j)(N)(0) = getCellEdge(i,j,E)/2;
+									centroids(i,j)(N)(1) = getCellEdge(i,j,N);
+									areaFractions(i,j)(N) = getCellEdge(i,j,E)/h;
+
+									faceTypes(i,j)(E) = IRREGULAR;
+									centroids(i,j)(E)(0) = getCellEdge(i,j,E);
+									centroids(i,j)(E)(1) = getCellEdge(i,j,N)/2;
+									areaFractions(i,j)(E) = getCellEdge(i,j,N)/h;
+
+									faceTypes(i,j)(B) = IRREGULAR;
+
+									// Shouldn't use this centroid. Same with other corners.
+									centroids(i,j)(B)(0) = centroids(i,j)(N)(0);
+									centroids(i,j)(B)(1) = centroids(i,j)(E)(1);
+									areaFractions(i,j)(B) = areaFractions(i,j)(N) + areaFractions(i,j)(E);
+
+									// Shouldn't use this outward normal. Same with other corners.
+									outwardNormals(i,j)(0) = -areaFractions(i,j)(E)/areaFractions(i,j)(B);
+									outwardNormals(i,j)(1) = -areaFractions(i,j)(N)/areaFractions(i,j)(B);
+								}
+								else if(abs(centers(i,j)(1) - 1) < h/2){ // i = 1, j = jMax
+									cellTypes(i,j) = IRREGULAR;
+
+									faceTypes(i,j)(N) = COVERED;
+									areaFractions(i,j)(N) = 0;
+									centroids(i,j)(N) = 0;
+
+									faceTypes(i,j)(W) = COVERED;
+									areaFractions(i,j)(W) = 0;
+									centroids(i,j)(W) = 0;
+
+									faceTypes(i,j)(S) = IRREGULAR;
+									centroids(i,j)(S)(0) = getCellEdge(i,j,E)/2;
+									centroids(i,j)(S)(1) = getCellEdge(i,j,S);
+									areaFractions(i,j)(S) = getCellEdge(i,j,E)/h;
+
+									faceTypes(i,j)(E) = IRREGULAR;
+									centroids(i,j)(E)(0) = getCellEdge(i,j,E);
+									centroids(i,j)(E)(1) = (1 + getCellEdge(i,j,S))/2;
+									areaFractions(i,j)(E) = (1 - getCellEdge(i,j,S))/h;
+
+									faceTypes(i,j)(B) = IRREGULAR;
+									centroids(i,j)(B)(0) = centroids(i,j)(S)(0);
+									centroids(i,j)(B)(1) = centroids(i,j)(E)(1);
+									areaFractions(i,j)(B) = areaFractions(i,j)(S) + areaFractions(i,j)(E);
+
+									outwardNormals(i,j)(0) = -areaFractions(i,j)(E)/areaFractions(i,j)(B);
+									outwardNormals(i,j)(1) = areaFractions(i,j)(S)/areaFractions(i,j)(B);
+								}
+								else{ // i = 1, j != 1, j != jMax
+									cellTypes(i,j) = IRREGULAR;
+
+									faceTypes(i,j)(W) = COVERED;
+									areaFractions(i,j)(W) = 0;
+									centroids(i,j)(W) = 0;
+
+									faceTypes(i,j)(N) = IRREGULAR;
+									centroids(i,j)(N)(0) = getCellEdge(i,j,E)/2;
+									centroids(i,j)(N)(1) = getCellEdge(i,j,N);
+									areaFractions(i,j)(N) = getCellEdge(i,j,E)/h;
+
+									faceTypes(i,j)(S) = IRREGULAR;
+									centroids(i,j)(S)(0) = getCellEdge(i,j,E)/2;
+									centroids(i,j)(S)(1) = getCellEdge(i,j,S);
+									areaFractions(i,j)(S) = getCellEdge(i,j,E)/h;
+
+									faceTypes(i,j)(B) = IRREGULAR;
+									centroids(i,j)(B)(0) = 0;
+									centroids(i,j)(B)(1) = centers(i,j)(1);
+									areaFractions(i,j)(B) = 1;
+									outwardNormals(i,j)(0) = -1;
+									outwardNormals(i,j)(1) = 0;
+								}
+							}
+							else if(abs(centers(i,j)(0) - 1) < h/2){
+								if(abs(centers(i,j)(1)) < h/2){ // i = iMax, j = 1
+									cellTypes(i,j) = IRREGULAR;
+
+									faceTypes(i,j)(S) = COVERED;
+									areaFractions(i,j)(S) = 0;
+									centroids(i,j)(S) = 0;
+
+									faceTypes(i,j)(E) = COVERED;
+									areaFractions(i,j)(E) = 0;
+									centroids(i,j)(E) = 0;
+
+									faceTypes(i,j)(N) = IRREGULAR;
+									centroids(i,j)(N)(0) = (1 + getCellEdge(i,j,W))/2;
+									centroids(i,j)(N)(1) = getCellEdge(i,j,N);
+									areaFractions(i,j)(N) = (1 - getCellEdge(i,j,W))/h;
+
+									faceTypes(i,j)(W) = IRREGULAR;
+									centroids(i,j)(W)(0) = getCellEdge(i,j,W);
+									centroids(i,j)(W)(1) = getCellEdge(i,j,N)/2;
+									areaFractions(i,j)(W) = getCellEdge(i,j,N)/h;
+
+									faceTypes(i,j)(B) = IRREGULAR;
+									centroids(i,j)(B)(0) = centroids(i,j)(N)(0);
+									centroids(i,j)(B)(1) = centroids(i,j)(W)(1);
+									areaFractions(i,j)(B) = areaFractions(i,j)(N) + areaFractions(i,j)(W);
+
+									outwardNormals(i,j)(0) = areaFractions(i,j)(W)/areaFractions(i,j)(B);
+									outwardNormals(i,j)(1) = -areaFractions(i,j)(N)/areaFractions(i,j)(B);
+								}
+								else if(abs(centers(i,j)(1) - 1) < h/2){ // i = iMax, j = jMax
+									cellTypes(i,j) = IRREGULAR;
+
+									faceTypes(i,j)(N) = COVERED;
+									areaFractions(i,j)(N) = 0;
+									centroids(i,j)(N) = 0;
+
+									faceTypes(i,j)(E) = COVERED;
+									areaFractions(i,j)(E) = 0;
+									centroids(i,j)(E) = 0;
+
+									faceTypes(i,j)(S) = IRREGULAR;
+									centroids(i,j)(S)(0) = (1 + getCellEdge(i,j,W))/2;
+									centroids(i,j)(S)(1) = getCellEdge(i,j,S);
+									areaFractions(i,j)(S) = (1 - getCellEdge(i,j,W))/h;
+
+									faceTypes(i,j)(W) = IRREGULAR;
+									centroids(i,j)(W)(0) = getCellEdge(i,j,W);
+									centroids(i,j)(W)(1) = (1 + getCellEdge(i,j,S))/2;
+									areaFractions(i,j)(W) = (1 - getCellEdge(i,j,S))/h;
+
+									faceTypes(i,j)(B) = IRREGULAR;
+									centroids(i,j)(B)(0) = centroids(i,j)(S)(0);
+									centroids(i,j)(B)(1) = centroids(i,j)(W)(1);
+									areaFractions(i,j)(B) = areaFractions(i,j)(S) + areaFractions(i,j)(W);
+
+									outwardNormals(i,j)(0) = areaFractions(i,j)(W)/areaFractions(i,j)(B);
+									outwardNormals(i,j)(1) = areaFractions(i,j)(S)/areaFractions(i,j)(B);
+								}
+								else{ // i = iMax, j != 1, j != jMax
+									cellTypes(i,j) = IRREGULAR;
+
+									faceTypes(i,j)(E) = COVERED;
+									areaFractions(i,j)(E) = 0;
+									centroids(i,j)(E) = 0;
+
+									faceTypes(i,j)(N) = IRREGULAR;
+									centroids(i,j)(N)(0) = (1 + getCellEdge(i,j,W))/2;
+									centroids(i,j)(N)(1) = getCellEdge(i,j,N);
+									areaFractions(i,j)(N) = (1 - getCellEdge(i,j,W))/h;
+
+									faceTypes(i,j)(S) = IRREGULAR;
+									centroids(i,j)(S)(0) = (1 + getCellEdge(i,j,W))/2;
+									centroids(i,j)(S)(1) = getCellEdge(i,j,S);
+									areaFractions(i,j)(S) = (1 - getCellEdge(i,j,W))/h;
+
+									faceTypes(i,j)(B) = IRREGULAR;
+									centroids(i,j)(B)(0) = 1;
+									centroids(i,j)(B)(1) = centers(i,j)(1);
+									areaFractions(i,j)(B) = 1;
+									outwardNormals(i,j)(0) = 1;
+									outwardNormals(i,j)(1) = 0;
+								}
+							}
+							else if(abs(centers(i,j)(1)) < h/2){ // j = 1, i != 1, i != iMax
+								cellTypes(i,j) = IRREGULAR;
+
+								faceTypes(i,j)(S) = COVERED;
+								areaFractions(i,j)(S) = 0;
+								centroids(i,j)(S) = 0;
+
+								faceTypes(i,j)(E) = IRREGULAR;
+								centroids(i,j)(E)(0) = getCellEdge(i,j,E);
+								centroids(i,j)(E)(1) = getCellEdge(i,j,N)/2;
+								areaFractions(i,j)(E) = getCellEdge(i,j,N)/h;
+
+								faceTypes(i,j)(W) = IRREGULAR;
+								centroids(i,j)(W)(0) = getCellEdge(i,j,W);
+								centroids(i,j)(W)(1) = getCellEdge(i,j,N)/2;
+								areaFractions(i,j)(W) = getCellEdge(i,j,N)/h;
+
+								faceTypes(i,j)(B) = IRREGULAR;
+								centroids(i,j)(B)(0) = centers(i,j)(0);
+								centroids(i,j)(B)(1) = 0;
+								areaFractions(i,j)(B) = 1;
+								outwardNormals(i,j)(0) = 0;
+								outwardNormals(i,j)(1) = -1;
+							}
+							else if(abs(centers(i,j)(1) - 1) < h/2){ // j = jMax, i != 1, i != iMax
+								cellTypes(i,j) = IRREGULAR;
+
+								faceTypes(i,j)(N) = COVERED;
+								areaFractions(i,j)(N) = 0;
+								centroids(i,j)(N) = 0;
+
+								faceTypes(i,j)(E) = IRREGULAR;
+								centroids(i,j)(E)(0) = getCellEdge(i,j,E);
+								centroids(i,j)(E)(1) = (1 + getCellEdge(i,j,S))/2;
+								areaFractions(i,j)(E) = (1 - getCellEdge(i,j,S))/h;
+
+								faceTypes(i,j)(W) = IRREGULAR;
+								centroids(i,j)(W)(0) = getCellEdge(i,j,W);
+								centroids(i,j)(W)(1) = (1 + getCellEdge(i,j,S))/2;
+								areaFractions(i,j)(W) = (1 - getCellEdge(i,j,S))/h;
+
+								faceTypes(i,j)(B) = IRREGULAR;
+								centroids(i,j)(B)(0) = centers(i,j)(0);
+								centroids(i,j)(B)(1) = 1;
+								areaFractions(i,j)(B) = 1;
+								outwardNormals(i,j)(0) = 0;
+								outwardNormals(i,j)(1) = 1;
+							}
+						}
+						for(int i = 1; i <= iMax; i++){
+							for(int j = 1; j <= jMax; j++){
+								volumeFractions(i,j) = calculateVolumeFraction(i,j);
+								if(abs(centers(i,j)(0)) < h/2 && abs(centers(i,j)(1)) < h/2){
+									volumeFractions(i,j) = areaFractions(i,j)(N)*areaFractions(i,j)(E);
+								}
+								if(abs(centers(i,j)(0)) < h/2 && abs(1 - centers(i,j)(1)) < h/2){
+									volumeFractions(i,j) = areaFractions(i,j)(S) + areaFractions(i,j)(E);
+								}
+								if(abs(1 - centers(i,j)(0)) < h/2 && abs(centers(i,j)(1)) < h/2){
+									volumeFractions(i,j) = areaFractions(i,j)(W) + areaFractions(i,j)(N);
+								}
+								if(abs(1 - centers(i,j)(0)) < h/2 && abs(1 - centers(i,j)(1)) < h/2){
+									volumeFractions(i,j) = areaFractions(i,j)(W) + areaFractions(i,j)(S);
+								}
+								countVertices(i,j);
+								getVertices(i,j);
+								cellCentroids(i,j) = calculateCellCentroid(i,j);
+							}
+						}
+					}
+				}
+			}
+		public:
+			double offset;
+			bool contains(Coord c){
+				double x = c(0), y = c(1);
+				if(x >= 0 && x <= 1 && y >= 0 && y <= 1)
+					return true;
+				return false;
+			}
+			UnitSquareBetterBoundaries(double h, double offset){
+				this->h = h;
+				this->offset = offset;
+				make();
+			}
+			UnitSquareBetterBoundaries(const UnitSquareBetterBoundaries & u){
+				this->h = u.h;
+				this->offset = u.offset;
+				make();
+				this->volumeFractions = u.volumeFractions;
+			}
+			Grid * copy() const{
+				return new UnitSquareBetterBoundaries(*this);
+			}
+			void respace(double hNew){
+				this->h = hNew;
+				make();
+			}
+		};
+
 		class UnitSquare : public Grid{
 			void make(){
 				double width = 1 + offset;
@@ -845,6 +1181,9 @@ namespace CFD{
 				areaFractions.resize(xRange,yRange);
 				faceTypes.resize(xRange,yRange);
 				outwardNormals.resize(xRange,yRange);
+				cellCentroids.resize(xRange,yRange);
+				numberOfVertices.resize(xRange,yRange);
+				vertices.resize(xRange,yRange);
 
 				for(int i = 1; i <= iMax; i++){
 					for(int j = 1; j <= jMax; j++){
@@ -1069,7 +1408,7 @@ namespace CFD{
 								faceTypes(i,j)(B) = IRREGULAR;
 								centroids(i,j)(B)(0) = centers(i,j)(0);
 								centroids(i,j)(B)(1) = 0;
-								areaFractions(i,j)(B) = 0;
+								areaFractions(i,j)(B) = 1;
 								outwardNormals(i,j)(0) = 0;
 								outwardNormals(i,j)(1) = -1;
 							}
@@ -1103,6 +1442,21 @@ namespace CFD{
 				for(int i = 1; i <= iMax; i++){
 					for(int j = 1; j <= jMax; j++){
 						volumeFractions(i,j) = calculateVolumeFraction(i,j);
+						if(abs(centers(i,j)(0)) < h/2 && abs(centers(i,j)(1)) < h/2){
+							volumeFractions(i,j) *= 2.0;
+						}
+						if(abs(centers(i,j)(0)) < h/2 && abs(1 - centers(i,j)(1)) < h/2){
+							volumeFractions(i,j) *= 2.0;
+						}
+						if(abs(1 - centers(i,j)(0)) < h/2 && abs(centers(i,j)(1)) < h/2){
+							volumeFractions(i,j) *= 2.0;
+						}
+						if(abs(1 - centers(i,j)(0)) < h/2 && abs(1 - centers(i,j)(1)) < h/2){
+							volumeFractions(i,j) *= 2.0;
+						}
+						countVertices(i,j);
+						getVertices(i,j);
+						cellCentroids(i,j) = calculateCellCentroid(i,j);
 					}
 				}
 			}
@@ -1185,6 +1539,9 @@ namespace CFD{
 								out(NW) =  ((1 - a)/2)/h;
 								out(W)  = -((1 - a)/2)/h;
 							}
+							else{
+								cout << "Problem" << endl;
+							}
 						}
 						else if(dir == S){
 							if(g->isUncovered(i+1,j) && g->isUncovered(i+1,j-1)){
@@ -1200,6 +1557,9 @@ namespace CFD{
 
 								out(W)  =  ((1 - a)/2)/h;
 								out(SW) = -((1 - a)/2)/h;
+							}
+							else{
+								cout << "Problem" << endl;
 							}
 						}
 						else if(dir == E){
@@ -1217,6 +1577,9 @@ namespace CFD{
 								out(SE) =  ((1 - a)/2)/h;
 								out(S)  = -((1 - a)/2)/h;
 							}
+							else{
+								cout << "Problem" << endl;
+							}
 
 						}
 						else if(dir == W){
@@ -1233,6 +1596,9 @@ namespace CFD{
 
 								out(S)  =  ((1 - a)/2)/h;
 								out(SW) = -((1 - a)/2)/h;
+							}
+							else{
+								cout << "Problem" << endl;
 							}
 						}
 					}
