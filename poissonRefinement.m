@@ -5,14 +5,16 @@ function [norms, ratios] = poissonRefinement(hCoarsest, levels)
     D = 1;
     H = 0;
     Q0 = 1;
-    v1 = 2;
-    v2 = 2;
-    its = 100;
+    v1 = 3;
+    v2 = 3;
+    its = 30;
     timesteps = 1;
+    offsetFrac = .3;
     
     for l=1:levels
         h = hCoarsest/(2^(l-1));
-        [x,y,v] = mxGetGridInfo(h,h/2);
+        [x,y,v] = mxGetGridInfo(h,h*offsetFrac);
+        r = sqrt(x.^2 + y.^2);
         
         
         % Poisson problem settings
@@ -20,13 +22,18 @@ function [norms, ratios] = poissonRefinement(hCoarsest, levels)
         fE = cos(4*pi*x).*cos(12*pi*y);
         rhs = fE*(-16*pi^2 - 144*pi^2);
         
+        % Radial poisson problem settings
+        f0 = 0*x;
+        fE = cos(2*pi*r);
+        rhs = -(2*pi./r).*sin(2*pi*r) - 4*(pi^2)*cos(2*pi*r);
+        
 %         % Diffusion problem settings
 %         t = deltaT*(timesteps);
 %         f0 = cos(2*pi*x)+cos(2*pi*y);
 %         fE = exp((-D*(2*pi)^2)*t)*f0;
 %         rhs = 0*fE;
         
-        fN = mxFENESolver(f0,rhs,h,deltaT,D,H,Q0,v1,v2,its,timesteps);
+        fN = mxFENESolver(f0,rhs,h,deltaT,D,H,Q0,v1,v2,its,timesteps,offsetFrac);
         
          [n, ~] = size(fN);
          m = round(n/2);

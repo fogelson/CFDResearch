@@ -23,12 +23,12 @@ using namespace blitzmatlab;
  */
 
 /* The following command should be invoked from MATLAB:
- * [f] = mxFileTemplate(f0,rhs,h,deltaT,D,H,Q0,v1,v1,its,timesteps)
+ * [f] = mxFileTemplate(f0,rhs,h,deltaT,D,H,Q0,v1,v1,its,timesteps,offsetFrac)
  */
 
 void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]){
 	// Desired number of inputs and outputs
-	int inputs = 11;
+	int inputs = 12;
 	int outputs = 1;
 
 	/* Check for proper number of arguments. */
@@ -39,7 +39,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]){
 		mexErrMsgTxt("Too many outputs.");
 	}
 
-	double h, deltaT, D, H, Q0, v1, v2, its, timesteps;
+	double h, deltaT, D, H, Q0, v1, v2, its, timesteps, offsetFrac;
 
 	h = getMxDouble(prhs[2]);
 	deltaT = getMxDouble(prhs[3]);
@@ -50,16 +50,17 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]){
 	v2 = getMxDouble(prhs[8]);
 	its = getMxDouble(prhs[9]);
 	timesteps = getMxDouble(prhs[10]);
+	offsetFrac = getMxDouble(prhs[11]);
 
-	Grid * g = new UnitSquare(h,h/2);
-	//Grid * g = new Circle(h,Q0,h/2);
+	//Grid * g = new UnitSquare(h,h*offsetFrac);
+	Grid * g = new Circle(h,Q0,h*offsetFrac);
 	//Stencil * s = new FENEStencil(g,deltaT,D,H,Q0);
 	Stencil * s = new PoissonStencil(g);
 	//Stencil * s = new BackwardEulerDiffusionStencil(g,deltaT,D);
-	Interpolator * interpolator = new BilinearInterpolator();
+	Interpolator * interpolator = new BilinearInterpolator();//QuadraticBoundaries();
 	Restrictor * restrictor = new VolumeWeightedRestrictor();
-	StenciledSmoother * smoother = new StenciledGSLex();
-	//StenciledSmoother * smoother = new StenciledFourPointGS();
+	//StenciledSmoother * smoother = new StenciledGSLex();
+	StenciledSmoother * smoother = new StenciledFourPointGS();
 	StenciledMultigridSolver * solver = new StenciledMultigridSolver(smoother,interpolator,restrictor);
 
 	CellDoubleArray f0 = g->makeCellDoubleArray();

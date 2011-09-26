@@ -14,7 +14,7 @@ namespace CFD{
 	namespace Geometry{
 		class Stencil{
 		private:
-			double apply(Array<Coefficients,2> c, CellDoubleArray &u, int i, int j){
+			double apply(Array<Coefficients,2> &c, CellDoubleArray &u, int i, int j){
 				double uC, uN, uS, uE, uW, uNE, uNW, uSE, uSW;
 
 				Type type = g->getCellType(i,j);
@@ -40,6 +40,10 @@ namespace CFD{
 						uNE = g->isUncovered(i+1,j+1) ? u(i+1,j+1) : 0;
 						uSW = g->isUncovered(i-1,j-1) ? u(i-1,j-1) : 0;
 						uSE = g->isUncovered(i+1,j-1) ? u(i+1,j-1) : 0;
+						//uNW = uC;
+						//uNE = uC;
+						//uSW = uC;
+						//uSE = uC;
 					}
 
 					double Su = c(i,j)(C)*uC

@@ -49,6 +49,170 @@ namespace CFD{
 			}
 		};*/
 
+		class BilinearInterpolatorQuadraticBoundaries : public Interpolator{
+			double regularStencil(double near, double middle1, double middle2, double far){
+				return (9*near + 3*middle1 + 3*middle2 + far)/16;
+			}
+			double boundaryStencilSweepOne(CellDoubleArray & uF, int iF, int jF, Grid * fine){
+				double a, b, c;
+				// Look north
+				if(fine->isRegular(iF,jF+1) && fine->isRegular(iF,jF+2) && fine->isRegular(iF,jF+3)){
+					a = uF(iF,jF+3);
+					b = uF(iF,jF+2);
+					c = uF(iF,jF+1);
+				}
+				// Look east
+				else if(fine->isRegular(iF+1,jF) && fine->isRegular(iF+2,jF) && fine->isRegular(iF+3,jF)){
+					a = uF(iF+3,jF);
+					b = uF(iF+2,jF);
+					c = uF(iF+1,jF);
+				}
+				// Look south
+				else if(fine->isRegular(iF,jF-1) && fine->isRegular(iF,jF-2) && fine->isRegular(iF,jF-3)){
+					a = uF(iF,jF-3);
+					b = uF(iF,jF-2);
+					c = uF(iF,jF-1);
+				}
+				// Look west
+				else if(fine->isRegular(iF-1,jF) && fine->isRegular(iF-2,jF) && fine->isRegular(iF-3,jF)){
+					a = uF(iF-3,jF);
+					b = uF(iF-2,jF);
+					c = uF(iF-1,jF);
+				}
+				else{
+					cout << "Could not apply quadratic boundary stencil on first sweep." << endl;
+					return 0;
+				}
+				cout << "Did apply quadratic boundary stencil on first sweep." << endl;
+				return (a - 3*b + 3*c);
+			}
+			double boundaryStencilSweepTwo(CellDoubleArray & uF, int iF, int jF, Grid * fine){
+				double a, b, c;
+				// Look north
+				if(fine->isUncovered(iF,jF+1) && fine->isUncovered(iF,jF+2) && fine->isUncovered(iF,jF+3)){
+					a = uF(iF,jF+3);
+					b = uF(iF,jF+2);
+					c = uF(iF,jF+1);
+				}
+				// Look east
+				else if(fine->isUncovered(iF+1,jF) && fine->isUncovered(iF+2,jF) && fine->isUncovered(iF+3,jF)){
+					a = uF(iF+3,jF);
+					b = uF(iF+2,jF);
+					c = uF(iF+1,jF);
+				}
+				// Look south
+				else if(fine->isUncovered(iF,jF-1) && fine->isUncovered(iF,jF-2) && fine->isUncovered(iF,jF-3)){
+					a = uF(iF,jF-3);
+					b = uF(iF,jF-2);
+					c = uF(iF,jF-1);
+				}
+				// Look west
+				else if(fine->isUncovered(iF-1,jF) && fine->isUncovered(iF-2,jF) && fine->isUncovered(iF-3,jF)){
+					a = uF(iF-3,jF);
+					b = uF(iF-2,jF);
+					c = uF(iF-1,jF);
+				}
+				else{
+					cout << "Could not apply quadratic boundary stencil on second sweep." << endl;
+					return 0;
+				}
+				cout << "Did apply quadratic boundary stencil on second sweep." << endl;
+				return (a - 3*b + 3*c);
+			}
+			void boundaryStencil(CellDoubleArray & uF, Array<bool,2> & interpolated, int iF, int jF, Grid * fine){
+				double a, b, c;
+				// Look north
+				if(fine->isUncovered(iF,jF+1) && fine->isUncovered(iF,jF+2) && fine->isUncovered(iF,jF+3)
+						&& interpolated(iF,jF+1) && interpolated(iF,jF+2) && interpolated(iF,jF+3)){
+					a = uF(iF,jF+3);
+					b = uF(iF,jF+2);
+					c = uF(iF,jF+1);
+				}
+				// Look east
+				else if(fine->isUncovered(iF+1,jF) && fine->isUncovered(iF+2,jF) && fine->isUncovered(iF+3,jF)
+						&& interpolated(iF+1,jF) && interpolated(iF+2,jF) && interpolated(iF+3,jF)){
+					a = uF(iF+3,jF);
+					b = uF(iF+2,jF);
+					c = uF(iF+1,jF);
+				}
+				// Look south
+				else if(fine->isUncovered(iF,jF-1) && fine->isUncovered(iF,jF-2) && fine->isUncovered(iF,jF-3)
+						&& interpolated(iF,jF-1) && interpolated(iF,jF-2) && interpolated(iF,jF-3)){
+					a = uF(iF,jF-3);
+					b = uF(iF,jF-2);
+					c = uF(iF,jF-1);
+				}
+				// Look west
+				else if(fine->isUncovered(iF-1,jF) && fine->isUncovered(iF-2,jF) && fine->isUncovered(iF-3,jF)
+						&& interpolated(iF-1,jF) && interpolated(iF-2,jF) && interpolated(iF-3,jF)){
+					a = uF(iF-3,jF);
+					b = uF(iF-2,jF);
+					c = uF(iF-1,jF);
+				}
+				else{
+					//cout << "Could not apply quadratic boundary stencil on second sweep." << endl;
+					uF(iF,jF) = 30;
+					return;
+				}
+				uF(iF,jF) = (a - 3*b + 3*c);
+				interpolated(iF,jF) = true;
+				//cout << "Did apply quadratic boundary stencil on second sweep." << endl;
+			}
+		public:
+			void doInterpolate(CellDoubleArray & uF, CellDoubleArray & uC, Grid * fine, Grid * coarse){
+				Array<bool,2> interpolated(fine->xRange,fine->yRange);
+				interpolated = false;
+				for(int iC = 1; iC <= coarse->iMax; iC++){
+					for(int jC = 1; jC <= coarse->jMax; jC++){
+						int iF = iC*2, jF = jC*2;
+						if(coarse->isUncovered(iC,jC)){
+							// NE
+							if(fine->isRegular(iF,jF)){
+								uF(iF,jF) = regularStencil(uC(iC,jC),uC(iC,jC+1),uC(iC+1,jC),uC(iC+1,jC+1));
+								interpolated(iF,jF) = true;
+							}
+							// NW
+							if((fine->isRegular(iF-1,jF))){
+								uF(iF-1,jF) = regularStencil(uC(iC,jC),uC(iC-1,jC),uC(iC,jC+1),uC(iC-1,jC+1));
+								interpolated(iF-1,jF) = true;
+							}
+							// SE
+							if(fine->isRegular(iF,jF-1)){
+								uF(iF,jF-1) = regularStencil(uC(iC,jC),uC(iC,jC-1),uC(iC+1,jC),uC(iC+1,jC-1));
+								interpolated(iF,jF-1) = true;
+							}
+							// SW
+							if(fine->isRegular(iF-1,jF-1)){
+								uF(iF-1,jF-1) = regularStencil(uC(iC,jC),uC(iC-1,jC),uC(iC,jC-1),uC(iC-1,jC-1));
+								interpolated(iF-1,jF-1) = true;
+							}
+						}
+					}
+				}
+				int sweeps = 4;
+				for(int s = 0; s < sweeps; s++){
+					for(int iF = fine->iMin; iF <= fine->iMax; iF++){
+						for(int jF = fine->jMin; jF <= fine->jMax; jF++){
+							if(fine->isIrregular(iF,jF) && !interpolated(iF,jF)){
+								boundaryStencil(uF,interpolated,iF,jF,fine);
+							}
+						}
+					}
+				}
+				/*for(int iF = 1; iF <= fine->iMax; iF++){
+					for(int jF = 1; jF <= fine->jMax; jF++){
+						if(fine->getCellType(iF,jF) == REGULAR){
+							uF(iF,jF) = 1;
+						}
+					}
+				}*/
+				//CellDoubleArray out(fine->xRange,fine->yRange);
+				//out = 1.0*(fine->cellTypes);
+				//return uF;
+			}
+
+		};
+
 		class BilinearInterpolator : public Interpolator{
 			double regularStencil(double near, double middle1, double middle2, double far){
 				return (9*near + 3*middle1 + 3*middle2 + far)/16;
@@ -538,16 +702,64 @@ namespace CFD{
 				for(int iC = iCMin; iC <= iCMax; iC++){
 					for(int jC = jCMin; jC <= jCMax; jC++){
 						if(coarse->isUncovered(iC,jC)){
-							double vNE = fine->volumeFractions(2*iC,2*jC);
+							double vNE = 0, vNW = 0, vSE = 0, vSW = 0;
+							double uNE = 0, uNW = 0, uSE = 0, uSW = 0;
+
+							int numUncovered = 0;
+
+							if(fine->isUncovered(2*iC,2*jC)){
+								uNE = uF(2*iC,2*jC);
+								numUncovered++;
+							}
+							if(fine->isUncovered(2*iC-1,2*jC)){
+								uNW = uF(2*iC-1,2*jC);
+								numUncovered++;
+							}
+							if(fine->isUncovered(2*iC,2*jC-1)){
+								uSE = uF(2*iC,2*jC-1);
+								numUncovered++;
+							}
+							if(fine->isUncovered(2*iC-1,2*jC-1)){
+								uSW = uF(2*iC-1,2*jC-1);
+								numUncovered++;
+							}
+
+
+							/*double vNE = fine->volumeFractions(2*iC,2*jC);
 							double vNW = fine->volumeFractions(2*iC-1,2*jC);
 							double vSE = fine->volumeFractions(2*iC,2*jC-1);
 							double vSW = fine->volumeFractions(2*iC-1,2*jC-1);
-							double uNE = uF(2*iC,2*jC);
-							double uNW = uF(2*iC-1,2*jC);
-							double uSE = uF(2*iC,2*jC-1);
-							double uSW = uF(2*iC-1,2*jC-1);
+							double uNE = fine->isUncovered(2*iC,2*jC) ? uF(2*iC,2*jC) : 0;
+							double uNW = fine->isUncovered(2*iC-1,2*jC) ? uF(2*iC-1,2*jC) : 0;
+							double uSE = fine->isUncovered(2*iC,2*jC-1) ? uF(2*iC,2*jC-1) : 0;
+							double uSW = fine->isUncovered(2*iC-1,2*jC-1) ? uF(2*iC-1,2*jC-1) : 0;
 
-							uC(iC,jC) = (vNE*uNE + vNW*uNW + vSE*uSE + vSW*uSW)/(vNE + vNW + vSE + vSW);
+							double fineTotal = 0;
+							int fineCells = 0;
+
+							if(fine->isUncovered(2*iC,2*jC)){
+								fineTotal += uNE;
+								fineCells++;
+							}
+							if(fine->isUncovered(2*iC-1,2*jC)){
+								fineTotal += uNW;
+								fineCells++;
+							}
+							if(fine->isUncovered(2*iC,2*jC-1)){
+								fineTotal += uSE;
+								fineCells++;
+							}
+							if(fine->isUncovered(2*iC-1,2*jC-1)){
+								fineTotal += uSW;
+								fineCells++;
+							}*/
+
+							uC(iC,jC) = (uNE + uNW + uSE + uSW)/numUncovered;
+
+							//uC(iC,jC) = (vNE*uNE + vNW*uNW + vSE*uSE + vSW*uSW)/(vNE + vNW + vSE + vSW);
+							//uC(iC,jC) = fineTotal/fineCells;
+
+							//uC(iC,jC) = (uNE + uNW + uSE + uSW)/4;
 						}
 					}
 				}

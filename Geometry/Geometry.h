@@ -54,6 +54,14 @@ namespace CFD{
 		typedef TinyVector<double,9> Coefficients;
 		typedef Array<Coefficients,2> CoefficientArray;
 
+		struct Edge{
+			Coord end1, end2;
+			double length(){
+				return sqrt(pow2(end1(0) - end2(0)) + pow2(end1(1) - end2(1)));
+			}
+		};
+
+
 /*		Direction getCornerDirection(Direction a, Direction b){
 			if(a == N){
 				if(b == E){
@@ -323,6 +331,24 @@ namespace CFD{
 				else
 					return cellTypes(i,j);
 			}
+			Type getFaceType(int i, int j, Direction d){
+				if(isCovered(i,j))
+					return COVERED;
+				else
+					return faceTypes(i,j)(d);
+			}
+			bool isFaceUncovered(int i, int j, Direction d){
+				return (getFaceType(i,j,d) != COVERED);
+			}
+			bool isFaceCovered(int i, int j, Direction d){
+				return (getFaceType(i,j,d) == COVERED);
+			}
+			bool isFaceRegular(int i, int j, Direction d){
+				return (getFaceType(i,j,d) == REGULAR);
+			}
+			bool isFaceIrregular(int i, int j, Direction d){
+				return (getFaceType(i,j,d) == IRREGULAR);
+			}
 
 			bool isUncovered(int i, int j){
 				return (getCellType(i,j) != COVERED);
@@ -378,7 +404,25 @@ namespace CFD{
 				}
 				return facesCovered;
 			}
-			double calculateVolumeFraction(int i, int j){
+			virtual double calculateVolumeFractionBalls(int i, int j){
+				if(getCellType(i,j) == REGULAR){
+					return 1;
+				}
+				else if(getCellType(i,j) == COVERED){
+					return 0;
+				}
+				else{
+					double A = 0;
+					for(int k = 0; k < numberOfVertices(i,j); k++){
+						int kP = (k + 1) % numberOfVertices(i,j);
+						A += vertices(i,j)(k)(0)*vertices(i,j)(kP)(1) - vertices(i,j)(kP)(0)*vertices(i,j)(k)(1);
+					}
+					A = abs(A/2);
+					return A/pow2(h);
+				}
+			}
+
+			virtual double calculateVolumeFraction(int i, int j){
 				if(cellTypes(i,j) == REGULAR){
 					return 1;
 				}
@@ -473,6 +517,16 @@ namespace CFD{
 					break;
 				}
 				case 2: {// The interior region is a triangle, so we find the two uncovered faces.
+					/*cout << "Discovered a triangle. Here is a lot about it." << endl;
+					cout << "\ta_N = " << areaFractions(i,j)(N);
+					cout << ", \t\t Type_N = " << faceTypes(i,j)(N) << endl;
+					cout << "\ta_S = " << areaFractions(i,j)(S);
+					cout << ", \t\t Type_S = " << faceTypes(i,j)(S) << endl;
+					cout << "\ta_E = " << areaFractions(i,j)(E);
+					cout << ", \t\t Type_E = " << faceTypes(i,j)(E) << endl;
+					cout << "\ta_W = " << areaFractions(i,j)(W);
+					cout << ", \t\t Type_W = " << faceTypes(i,j)(W) << endl;*/
+					//return 1;
 					double a1, a2;
 					bool foundFirstFace = false, foundSecondFace = false;
 					if(!foundSecondFace && faceTypes(i,j)(N) != COVERED){
@@ -515,19 +569,22 @@ namespace CFD{
 							foundSecondFace = true;
 						}
 					}
-					return a1*a2/2;
+					return a1*a2/2.0;
 					break;
 				}
 				case 3:
 					// Something is wrong if this ever gets called.
+					cout << "oops" << endl;
 					return -1;
 					break;
 				case 4:
 					// Likewise here
+					cout << "oops" << endl;
 					return -2;
 					break;
 				default:
 					// Likewise here
+					cout << "oops" << endl;
 					return -3;
 					break;
 				}
@@ -551,11 +608,138 @@ namespace CFD{
 			}
 		};
 
+
+		class NewCircle : public Grid{
+			double r, offset;
+
+			bool isInterior(double x, double y){
+				return (pow2(x) + pow2(y) < pow2(r));
+			}
+			bool isExterior(double x, double y){
+				return (pow2(x) + pow2(y) > pow2(r));
+			}
+			bool isOnBoundary(double x, double y){
+				return (pow2(x) + pow2(y) == pow2(r));
+			}
+			bool isInterior(Coord c){
+				return isInterior(c(0),c(1));
+			}
+			bool isExterior(Coord c){
+				return isExterior(c(0),c(1));
+			}
+			bool isOnBoundary(Coord c){
+				return isOnBoundary(c(0),c(1));
+			}
+
+		public:
+			void make(){
+				double width = 2 * r + offset;
+				iMin = 1;
+				jMin = 1;
+				iMax = ceil(width/h);
+				jMax = ceil(width/h);
+				iMax = iMax + (iMax % 2);
+				jMax = jMax + (jMax % 2);
+				xRange.setRange(1,iMax,1);
+				yRange.setRange(1,jMax,1);
+
+				centers.resize(xRange,yRange);
+				volumeFractions.resize(xRange,yRange);
+				cellTypes.resize(xRange,yRange);
+				centroids.resize(xRange,yRange);
+				areaFractions.resize(xRange,yRange);
+				faceTypes.resize(xRange,yRange);
+				outwardNormals.resize(xRange,yRange);
+				cellCentroids.resize(xRange,yRange);
+				numberOfVertices.resize(xRange,yRange);
+				vertices.resize(xRange,yRange);
+
+				for(int i = 1; i <= iMax; i++){
+					for(int j = 1; j <= jMax; j++){
+						centers(i,j)(0) = h*(i-1) - r - offset + (h/2);
+						centers(i,j)(1) = h*(j-1) - r - offset + (h/2);
+
+						Coord NECorner, NWCorner, SECorner, SWCorner;
+
+						NECorner(0) = h*i - r - offset;
+						NECorner(1) = h*j - r - offset;
+
+						NWCorner(0) = h*(i-1) - r - offset;
+						NWCorner(1) = h*j - r - offset;
+
+						SECorner(0) = h*i - r - offset;
+						SECorner(1) = h*(j-1) - r - offset;
+
+						SWCorner(0) = h*(i-1) - r - offset;
+						SWCorner(1) = h*(j-1) - r - offset;
+
+						Edge NEdge, SEdge, EEdge, WEdge;
+
+						NEdge.end1 = NECorner;
+						NEdge.end2 = NWCorner;
+
+						SEdge.end1 = SECorner;
+						SEdge.end2 = SWCorner;
+
+						EEdge.end1 = NECorner;
+						EEdge.end2 = SECorner;
+
+						WEdge.end1 = NWCorner;
+						WEdge.end2 = SWCorner;
+
+
+					}
+				}
+			}
+		};
+
 		class Circle : public Grid{
 		public:
 			double r;
 			double x0, y0;
 			double offset;
+			void makeNope(){
+				double width = 2 * r + offset;
+				centers.resize(xRange,yRange);
+				volumeFractions.resize(xRange,yRange);
+				cellTypes.resize(xRange,yRange);
+				centroids.resize(xRange,yRange);
+				areaFractions.resize(xRange,yRange);
+				faceTypes.resize(xRange,yRange);
+				outwardNormals.resize(xRange,yRange);
+				cellCentroids.resize(xRange,yRange);
+				numberOfVertices.resize(xRange,yRange);
+				vertices.resize(xRange,yRange);
+
+				for(int i = iMin; i <= iMax; i++){
+					for(int j = jMin; j <= jMax; j++){
+						// NE
+						vertices(i,j)(0)(0) = i*h - offset - r + x0;
+						vertices(i,j)(0)(1) = j*h - offset - r + y0;
+
+						// SE
+						vertices(i,j)(1)(0) = i*h - offset - r + x0;
+						vertices(i,j)(1)(1) = (j-1)*h - offset - r + y0;
+
+						// SW
+						vertices(i,j)(2)(0) = (i-1)*h - offset - r + x0;
+						vertices(i,j)(2)(1) = (j-1)*h - offset - r + y0;
+
+						// NW
+						vertices(i,j)(3)(0) = (i-1)*h - offset - r + x0;
+						vertices(i,j)(3)(1) = j*h - offset - r + y0;
+
+						vertices(i,j)(4)(0) = 0;
+						vertices(i,j)(4)(1) = 0;
+
+						numberOfVertices(i,j) = 4;
+
+						centers(i,j)(0) = (i-1)*h + (h/2) - offset - r + x0;
+						centers(i,j)(1) = (j-1)*h + (h/2) - offset - r + y0;
+					}
+				}
+
+			}
 			void make(){
 				double width = 2 * r + offset;
 				iMin = 1;
@@ -793,14 +977,334 @@ namespace CFD{
 				}
 				for(int i = 1; i <= iMax; i++){
 					for(int j = 1; j <= jMax; j++){
-						volumeFractions(i,j) = calculateVolumeFraction(i,j);
 						countVertices(i,j);
 						getVertices(i,j);
+						volumeFractions(i,j) = calculateVolumeFraction(i,j);
 						cellCentroids(i,j) = calculateCellCentroid(i,j);
 					}
 				}
 			}
+			/*virtual double calculateVolumeFraction(int i, int j){
+				if(cellTypes(i,j) == COVERED){
+					return 0;
+				}
+				else if(cellTypes(i,j) == REGULAR){
+					return 1;
+				}
+				else{
+					double A;
+					if(numberOfVertices(i,j) == 3){
+						double x0, x1, y0;
+						if(faceTypes(i,j)(N) != COVERED && faceTypes(i,j)(E) != COVERED){
+							x0 = abs(getCellEdge(i,j,E));
+							y0 = abs(getCellEdge(i,j,N));
+							x1 = x0 + h*areaFractions(i,j)(N);
+						}
+						else if(faceTypes(i,j)(E) != COVERED && faceTypes(i,j)(S) != COVERED){
+							x0 = abs(getCellEdge(i,j,E));
+							y0 = abs(getCellEdge(i,j,S));
+							x1 = x0 + h*areaFractions(i,j)(S);
+						}
+						else if(faceTypes(i,j)(S) != COVERED && faceTypes(i,j)(W) != COVERED){
+							x0 = abs(getCellEdge(i,j,W));
+							y0 = abs(getCellEdge(i,j,S));
+							x1 = x0 + h*areaFractions(i,j)(S);
+						}
+						else if(faceTypes(i,j)(W) != COVERED && faceTypes(i,j)(N) != COVERED){
+							x0 = abs(getCellEdge(i,j,W));
+							y0 = abs(getCellEdge(i,j,N));
+							x1 = x0 + h*areaFractions(i,j)(N);
+						}
+						A = -(pow2(r)/2.0)*(acos(x1/r) - acos(x0/r)) + (x1*sqrt(pow2(r) - pow2(x1)) - x0*sqrt(pow2(r) - pow2(x0))) - y0*(x1 - x0);
+
+					}
+					else if(numberOfVertices(i,j) == 4){
+						double x0, x1, y0, y1;
+
+					}
+					else if(numberOfVertices(i,j) == 5){
+
+					}
+
+					return A;
+				}
+			}*/
 		public:
+			virtual double calculateVolumeFraction(int i, int j){
+				if(cellTypes(i,j) == REGULAR){
+					return 1;
+				}
+				if(cellTypes(i,j) == COVERED){
+					return 0;
+				}
+				if(faceTypes(i,j)(B) == COVERED || faceTypes(i,j)(B) == REGULAR){
+					// Something has gone wrong, since the boundary face should
+					// always be labeled irregular in an irregular cell
+					return -10;
+				}
+				// Returns the number of covered faces
+				int facesCovered = calculateFacesCovered(i,j);
+				switch(facesCovered){
+				case 0: {// The interior is a square with a triangle cut out of a corner.
+						 // So we find the two irregular faces, and the area of the triangle
+						 // at their corner, and subtract that from 1.
+
+					double x0, x1, y0, l;
+					bool doIt = false;
+					if(isFaceRegular(i,j,W) && isFaceRegular(i,j,S)){
+						l = areaFractions(i,j)(N)*h;
+						x1 = centroids(i,j)(E)(0);
+						x0 = l + x1 - h;
+						y0 = abs(centroids(i,j)(S)(1));
+						doIt = true;
+					}
+					else if(isFaceRegular(i,j,W) && isFaceRegular(i,j,N)){
+						l = areaFractions(i,j)(S)*h;
+						x1 = centroids(i,j)(E)(0);
+						x0 = l + x1 - h;
+						y0 = abs(centroids(i,j)(N)(1));
+						doIt = true;
+					}
+					else if(isFaceRegular(i,j,E) && isFaceRegular(i,j,S)){
+						l = areaFractions(i,j)(W)*h;
+						x1 = centroids(i,j)(N)(1);
+						x0 = l + x1 - h;
+						y0 = abs(centroids(i,j)(E)(0));
+						doIt = true;
+					}
+					else if(isFaceRegular(i,j,E) && isFaceRegular(i,j,N)){
+						l = areaFractions(i,j)(W)*h;
+						x0 = centroids(i,j)(S)(1);
+						x1 = h + x0 - l;
+						y0 = abs(centroids(i,j)(E)(0));
+						doIt = true;
+					}
+
+					doIt = false;
+
+					if(doIt){
+						double out = 0;
+						out = (0.5*r)*(x1*sqrt(1-pow2(x1/r)) + r*asin(x1/r)
+							- x0*sqrt(1-pow2(x0/r))
+							- r*asin(x0/r)) - y0*(x1 - x0)
+							+ l*h;
+						return abs(out/pow2(h));
+					}
+
+					double a1, a2;
+					bool foundFirstFace = false, foundSecondFace = false;
+					if(!foundSecondFace && faceTypes(i,j)(N) == IRREGULAR){
+						if(!foundFirstFace){
+							a1 = areaFractions(i,j)(N);
+							foundFirstFace = true;
+						}
+						else{
+							a2 = areaFractions(i,j)(N);
+							foundSecondFace = true;
+						}
+					}
+					if(!foundSecondFace && faceTypes(i,j)(S) == IRREGULAR){
+						if(!foundFirstFace){
+							a1 = areaFractions(i,j)(S);
+							foundFirstFace = true;
+						}
+						else{
+							a2 = areaFractions(i,j)(S);
+							foundSecondFace = true;
+						}
+					}
+					if(!foundSecondFace && faceTypes(i,j)(E) == IRREGULAR){
+						if(!foundFirstFace){
+							a1 = areaFractions(i,j)(E);
+							foundFirstFace = true;
+						}
+						else{
+							a2 = areaFractions(i,j)(E);
+							foundSecondFace = true;
+						}
+					}
+					if(!foundSecondFace && faceTypes(i,j)(W) == IRREGULAR){
+						if(!foundFirstFace){
+							a1 = areaFractions(i,j)(W);
+							foundFirstFace = true;
+						}
+						else{
+							a2 = areaFractions(i,j)(W);
+							foundSecondFace = true;
+						}
+					}
+					return 1 - (1 - a1)*(1-a2)/2;
+					break;
+				}
+				case 1: {
+					double x0, x1, y0;
+					if(isFaceRegular(i,j,S)){
+						x0 = centroids(i,j)(W)(0);
+						x1 = centroids(i,j)(E)(0);
+						y0 = abs(centroids(i,j)(S)(1));
+					}
+					else if(isFaceRegular(i,j,N)){
+						x0 = centroids(i,j)(W)(0);
+						x1 = centroids(i,j)(E)(0);
+						y0 = abs(centroids(i,j)(N)(1));
+					}
+					else if(isFaceRegular(i,j,E)){
+						x0 = centroids(i,j)(S)(1);
+						x1 = centroids(i,j)(N)(1);
+						y0 = abs(centroids(i,j)(E)(0));
+					}
+					else if(isFaceRegular(i,j,W)){
+						x0 = centroids(i,j)(S)(1);
+						x1 = centroids(i,j)(N)(1);
+						y0 = abs(centroids(i,j)(W)(0));
+					}
+
+					double out = 0;
+					out = (0.5*r)*(x1*sqrt(1-pow2(x1/r)) + r*asin(x1/r)
+							- x0*sqrt(1-pow2(x0/r)) - r*asin(x0/r))
+							- y0*(x1 - x0);
+					return abs(out/pow2(h));
+					break;
+
+					/* This is the most complicated case, because the interior region
+							 is a trapezoid. So we need to find all three uncovered faces,
+							 determine which two are parallel to one another, and then
+							 use the formula for the area of the trapezoid.
+						  */
+					double a1, a2, aH; // a1 and a2 are the parallel faces, aH is the trapezoid height face.
+					if(faceTypes(i,j)(N) != COVERED){
+						if(faceTypes(i,j)(S) != COVERED){
+							a1 = areaFractions(i,j)(N);
+							a2 = areaFractions(i,j)(S);
+							if(faceTypes(i,j)(E) != COVERED){ //NSE
+								aH = areaFractions(i,j)(E);
+							}
+							else{
+								aH = areaFractions(i,j)(W); //NSW
+							}
+						}
+						else{
+							aH = areaFractions(i,j)(N); // EWN
+							a1 = areaFractions(i,j)(E);
+							a2 = areaFractions(i,j)(W);
+						}
+					}
+					else{
+						aH = areaFractions(i,j)(S); // EWS
+						a1 = areaFractions(i,j)(E);
+						a2 = areaFractions(i,j)(W);
+					}
+					return aH*(a1 + a2)/2;
+					break;
+				}
+				case 2: {// The interior region is a triangle, so we find the two uncovered faces.
+					/*cout << "Discovered a triangle. Here is a lot about it." << endl;
+					cout << "\ta_N = " << areaFractions(i,j)(N);
+					cout << ", \t\t Type_N = " << faceTypes(i,j)(N) << endl;
+					cout << "\ta_S = " << areaFractions(i,j)(S);
+					cout << ", \t\t Type_S = " << faceTypes(i,j)(S) << endl;
+					cout << "\ta_E = " << areaFractions(i,j)(E);
+					cout << ", \t\t Type_E = " << faceTypes(i,j)(E) << endl;
+					cout << "\ta_W = " << areaFractions(i,j)(W);
+					cout << ", \t\t Type_W = " << faceTypes(i,j)(W) << endl;*/
+					//return 1;
+
+					double a, b, t, s;
+
+					if(isFaceUncovered(i,j,S) && isFaceUncovered(i,j,W)){
+						a = areaFractions(i,j)(S)*h;
+						b = areaFractions(i,j)(W)*h;
+						s = abs(centroids(i,j)(S)(1));
+						t = abs(centroids(i,j)(W)(0));
+					}
+					else if(isFaceUncovered(i,j,S) && isFaceUncovered(i,j,E)){
+						a = areaFractions(i,j)(S)*h;
+						b = areaFractions(i,j)(E)*h;
+						s = abs(centroids(i,j)(S)(1));
+						t = abs(centroids(i,j)(E)(0));
+					}
+					else if(isFaceUncovered(i,j,N) && isFaceUncovered(i,j,W)){
+						a = areaFractions(i,j)(N)*h;
+						b = areaFractions(i,j)(W)*h;
+						s = abs(centroids(i,j)(N)(1));
+						t = abs(centroids(i,j)(W)(0));
+					}
+					else if(isFaceUncovered(i,j,N) && isFaceUncovered(i,j,E)){
+						a = areaFractions(i,j)(N)*h;
+						b = areaFractions(i,j)(E)*h;
+						s = abs(centroids(i,j)(N)(1));
+						t = abs(centroids(i,j)(E)(0));
+					}
+
+					double out = 0;
+					out = (0.5*r)*((t+a)*sqrt(1.0 - pow2((t+a)/r)) + r*asin((t+a)/r) - t*sqrt(1.0 - pow2(t/r)) - r*asin(t/r)) - a*s;
+
+					return out/pow2(h);
+
+					break;
+
+					double a1, a2;
+					bool foundFirstFace = false, foundSecondFace = false;
+					if(!foundSecondFace && faceTypes(i,j)(N) != COVERED){
+						if(!foundFirstFace){
+							a1 = areaFractions(i,j)(N);
+							foundFirstFace = true;
+						}
+						else{
+							a2 = areaFractions(i,j)(N);
+							foundSecondFace = true;
+						}
+					}
+					if(!foundSecondFace && faceTypes(i,j)(S) != COVERED){
+						if(!foundFirstFace){
+							a1 = areaFractions(i,j)(S);
+							foundFirstFace = true;
+						}
+						else{
+							a2 = areaFractions(i,j)(S);
+							foundSecondFace = true;
+						}
+					}
+					if(!foundSecondFace && faceTypes(i,j)(E) != COVERED){
+						if(!foundFirstFace){
+							a1 = areaFractions(i,j)(E);
+							foundFirstFace = true;
+						}
+						else{
+							a2 = areaFractions(i,j)(E);
+							foundSecondFace = true;
+						}
+					}
+					if(!foundSecondFace && faceTypes(i,j)(W) != COVERED){
+						if(!foundFirstFace){
+							a1 = areaFractions(i,j)(W);
+							foundFirstFace = true;
+						}
+						else{
+							a2 = areaFractions(i,j)(W);
+							foundSecondFace = true;
+						}
+					}
+					return a1*a2/2.0;
+					break;
+				}
+				case 3:
+					// Something is wrong if this ever gets called.
+					cout << "oops" << endl;
+					return -1;
+					break;
+				case 4:
+					// Likewise here
+					cout << "oops" << endl;
+					return -2;
+					break;
+				default:
+					// Likewise here
+					cout << "oops" << endl;
+					return -3;
+					break;
+				}
+			}
 			bool contains(Coord c){
 				return pow2(c(0) - x0) + pow2(c(1) - y0) < pow2(r);
 			}

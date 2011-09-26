@@ -19,12 +19,12 @@ using namespace blitzmatlab;
  */
 
 /* The following command should be invoked from MATLAB:
- * [out1,out2,out3] = mxFileTemplate(h,offset)
+ * [out1,out2,out3,out4] = mxFileTemplate(h,offset)
  */
 void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]){
 	// Desired number of inputs and outputs
 	int inputs = 2;
-	int outputs = 3;
+	int outputs = 4;
 
 	/* Check for proper number of arguments. */
 	if(nrhs != inputs){
@@ -43,29 +43,31 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]){
 	double offset = getMxDouble(prhs[1]);
 
 	// Do something with the data
-	//CFD::Geometry::Grid * grid = new CFD::Geometry::Circle(h,1,offset);
-	CFD::Geometry::Grid * grid = new CFD::Geometry::UnitSquare(h,offset);
+	CFD::Geometry::Grid * grid = new CFD::Geometry::Circle(h,1,offset);
+	//CFD::Geometry::Grid * grid = new CFD::Geometry::UnitSquare(h,offset);
 
 	CellDoubleArray x = grid->centers.extractComponent(double(),0,2);
 	CellDoubleArray y = grid->centers.extractComponent(double(),1,2);
 	CellDoubleArray volumeFractions = grid->volumeFractions;
 
-	CellDoubleArray areaFractions = grid->areaFractions.extractComponent(double(),B,5);
+	CellDoubleArray north = grid->areaFractions.extractComponent(double(),N,5);
+	CellDoubleArray east = grid->areaFractions.extractComponent(double(),E,5);
+	CellDoubleArray south = grid->areaFractions.extractComponent(double(),S,5);
+	CellDoubleArray west = grid->areaFractions.extractComponent(double(),W,5);
 
-	Array<int,2> faceType = grid->faceTypes.extractComponent(int(),W,5);
-	CellDoubleArray zero = grid->makeCellDoubleArray();
+	CellDoubleArray out1 = north;
+	CellDoubleArray out2 = east;
+	CellDoubleArray out3 = south;
+	CellDoubleArray out4 = west;
 
-	CellDoubleArray faceTypeDouble = grid->makeCellDoubleArray();
-	faceTypeDouble = zero + faceType;
-
-	CellDoubleArray out1 = x;
-	CellDoubleArray out2 = y;
-	CellDoubleArray out3 = faceTypeDouble;
+	//out1 = grid->cellTypes + 0.0;
+	//out2 = grid->numberOfVertices + 0.0;
 
 	// Set output pointers to the desired outputs
 	plhs[0] = setMxArray(out1);
 	plhs[1] = setMxArray(out2);
 	plhs[2] = setMxArray(out3);
+	plhs[3] = setMxArray(out4);
 
 	delete grid;
 }
