@@ -15,31 +15,30 @@ namespace CFD{
 namespace OOGeometry{
 
 Grid::~Grid(){
-	return;
-	cout << "Called destructor." << endl;
+	//cout << "Called destructor." << endl;
 	for(int i = iMin; i <= iMax; i++){
 		for(int j = jMin; j <= jMax; j++){
 			delete cells(i,j);
 		}
 	}
-	cout << "Delete cells." << endl;
+	//cout << "Delete cells." << endl;
 	vector<Face*>::iterator faceIt;
 	for(faceIt = faces.begin(); faceIt != faces.end(); faceIt++){
 		delete (*faceIt);
 	}
-	cout << "Deleted faces." << endl;
+	//cout << "Deleted faces." << endl;
 	vector<Vertex*>::iterator vertexIt;
 	for(vertexIt = vertices.begin(); vertexIt != vertices.end(); vertexIt++){
 		delete (*vertexIt);
 	}
-	cout << "Deleted vertices." << endl;
+	//cout << "Deleted vertices." << endl;
 	if(hasCoarse){
 		delete coarseGrid;
 	}
 	if(hasFine){
 		fineGrid->setHasCoarse(false);
 	}
-	cout << "End of destructor" << endl;
+	//cout << "End of destructor" << endl;
 }
 
 Grid::Grid(){
@@ -75,6 +74,7 @@ void Grid::tile(double xMin, double yMin, double xMax, double yMax){
 	yRange.setRange(jMin,jMax,1);
 
 	cells.resize(xRange,yRange);
+	cells = 0;
 
 	for(int i = iMin; i <= iMax; i++){
 		for(int j = jMin; j <= jMax; j++){
@@ -313,7 +313,7 @@ void Grid::resizeCellDoubleArray(CellDoubleArray & c){
 }
 void Grid::resizeFaceDoubleArray(FaceDoubleArray & f){
 	f.resize(faces.size());
-	f.resize(400000000);
+	//f.resize(400000000);
 	f = 0;
 }
 void Grid::resizeVertexDoubleArray(VertexDoubleArray & v){

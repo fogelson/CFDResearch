@@ -24,13 +24,13 @@ using namespace CFD::OOGeometry;
 
 /* The following command should be invoked from MATLAB:
  *
- * mxSplit(xMin,xMax,yMin,yMax,h)
+ * mxSplit(h,r,offset)
  */
 void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]){
 	// Desired number of inputs and outputs
 
-	int outputs = 1;
-	int inputs = 0;
+	int outputs = 0;
+	int inputs = 3;
 
 	if(nrhs != inputs){
 		mexErrMsgTxt("Wrong number of inputs.");
@@ -39,23 +39,14 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]){
 		mexErrMsgTxt("Too many outputs.");
 	}
 
-/*
-	double xMin, xMax, yMin, yMax, h;
-	xMin = getMxDouble(prhs[0]);
-	xMax = getMxDouble(prhs[1]);
-	yMin = getMxDouble(prhs[2]);
-	yMax = getMxDouble(prhs[3]);
-	h = getMxDouble(prhs[4]);
 
-	double r = 1;
-	Circle * g = new Circle(h,r,h/2);
+	double h, r, offset;
 
-	//g->setH(h);
+	h = getMxDouble(prhs[0]);
+	r = getMxDouble(prhs[1]);
+	offset = getMxDouble(prhs[2]);
 
-	/*CellDoubleArray u;
-	u.resize(g->xRange,g->yRange);
-	u = 0;*/
-
+	Circle * g = new Circle(h,r,offset);
 	/*mexEvalString("figure; hold on;");
 
 	vector<Face*>::iterator it;
@@ -88,17 +79,17 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]){
 
 	}*/
 
-	plhs[0] = setMxInt(1);
-
-	double r = 1, h = .2, offset = h/2;
-	Circle * g = new Circle(h,r,offset);
-
+	CellDoubleArray cda;// = Arrays::makeCellDoubleArray(g);
+	cda.resize(g->xRange,g->yRange);
+	cda = 0;
 	FaceDoubleArray fda;
-	g->resizeFaceDoubleArray(fda);
-	//cout << fda << endl;
-	//fda.resize(400000000);
-	//fda = 0;
-//	cout << fda << endl;
+	fda.resize(g->faces.size());
+	fda = 0;
+	VertexDoubleArray vda;
+	vda.resize(g->vertices.size());
+	vda = 0;
+	//FaceDoubleArray fda = Arrays::makeFaceDoubleArray(g);
+	//VertexDoubleArray vda = Arrays::makeVertexDoubleArray(g);
 
 	delete g;
 	return;

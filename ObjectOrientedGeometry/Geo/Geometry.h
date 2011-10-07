@@ -204,6 +204,13 @@ public:
 	Grid * getGrid();
 };
 
+class Arrays{
+public:
+	static CellDoubleArray makeCellDoubleArray(Grid * g);
+	static FaceDoubleArray makeFaceDoubleArray(Grid * g);
+	static VertexDoubleArray makeVertexDoubleArray(Grid * g);
+};
+
 /*class CellDoubleArray : public Array<double,2>, public GridArray{
 
 };
