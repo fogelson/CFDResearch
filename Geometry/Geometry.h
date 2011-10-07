@@ -170,6 +170,8 @@ namespace CFD{
 			CellDoubleArray volumeFractions;
 			CellTypeArray cellTypes;
 
+			CellDoubleArray lengthRatios;
+
 			Array<int,2> numberOfVertices;
 			Array<TinyVector<Coord,5>,2> vertices;
 
@@ -192,7 +194,48 @@ namespace CFD{
 				cellCentroids.resize(xRange,yRange);
 				numberOfVertices.resize(xRange,yRange);
 				vertices.resize(xRange,yRange);
+				lengthRatios.resize(xRange,yRange);
 			}
+
+			void calculateRatios(){
+				for(int i = iMin; i <= iMax; i++){
+					for(int j = jMin; j <= jMax; j++){
+						if(isRegular(i,j)){
+							lengthRatios(i,j) = 1;
+						}
+						if(isIrregular(i,j)){
+							list<double> areas;
+							if(isFaceUncovered(i,j,N)){
+								areas.push_front(areaFractions(i,j)(N));
+							}
+							if(isFaceUncovered(i,j,E)){
+								areas.push_front(areaFractions(i,j)(E));
+							}
+							if(isFaceUncovered(i,j,S)){
+								areas.push_front(areaFractions(i,j)(S));
+							}
+							if(isFaceUncovered(i,j,W)){
+								areas.push_front(areaFractions(i,j)(W));
+							}
+							double aMin = 1, aMax = 0;
+							list<double>::iterator it;
+							for(it = areas.begin(); it != areas.end(); it++){
+								if(*it < aMin){
+									aMin = *it;
+								}
+								if(*it > aMax){
+									aMax = *it;
+								}
+							}
+							lengthRatios(i,j) = aMax/aMin;
+						}
+						else{
+							lengthRatios(i,j) = -1;
+						}
+					}
+				}
+			}
+
 			void countVertices(int i, int j){
 				int out;
 				if(cellTypes(i,j) == REGULAR){
@@ -226,64 +269,81 @@ namespace CFD{
 				int current = 0;
 				int n = numberOfVertices(i,j);
 				bool addedN = false, addedE = false, addedS = false, addedW = false;
+
+				Coord NWfromN, NEfromN, NEfromE, SEfromE, SEfromS, SWfromS, SWfromW, NWfromW;
+
 				if(faceTypes(i,j)(N) != COVERED){
 					double distanceToVertex = (h/2)*areaFractions(i,j)(N);
-					if(!addedW){
-						vertices(i,j)(current)(0) = centroids(i,j)(N)(0) - distanceToVertex;
-						vertices(i,j)(current)(1) = centroids(i,j)(N)(1);
-						current++;
-					}
-					if(!addedE){
-						vertices(i,j)(current)(0) = centroids(i,j)(N)(0) + distanceToVertex;
-						vertices(i,j)(current)(1) = centroids(i,j)(N)(1);
-						current++;
-					}
+					NWfromN(0) = centroids(i,j)(N)(0) - distanceToVertex;
+					NWfromN(1) = centroids(i,j)(N)(1);
+
+					NEfromN(0) = centroids(i,j)(N)(0) + distanceToVertex;
+					NEfromN(1) = centroids(i,j)(N)(1);
 					addedN = true;
 				}
 				if(faceTypes(i,j)(E) != COVERED){
 					double distanceToVertex = (h/2)*areaFractions(i,j)(E);
-					if(!addedN){
-						vertices(i,j)(current)(0) = centroids(i,j)(E)(0);
-						vertices(i,j)(current)(1) = centroids(i,j)(E)(1) + distanceToVertex;
-						current++;
-					}
-					if(!addedS){
-						vertices(i,j)(current)(0) = centroids(i,j)(E)(0);
-						vertices(i,j)(current)(1) = centroids(i,j)(E)(1) - distanceToVertex;
-						current++;
-					}
-					addedE = true;
+					NEfromE(0) = centroids(i,j)(E)(0);
+					NEfromE(1) = centroids(i,j)(E)(1) + distanceToVertex;
+
+					SEfromE(0) = centroids(i,j)(E)(0);
+					SEfromE(1) = centroids(i,j)(E)(1) - distanceToVertex;
 				}
 				if(faceTypes(i,j)(S) != COVERED){
 					double distanceToVertex = (h/2)*areaFractions(i,j)(S);
-					if(!addedE){
-						vertices(i,j)(current)(0) = centroids(i,j)(S)(0) + distanceToVertex;
-						vertices(i,j)(current)(1) = centroids(i,j)(S)(1);
-						current++;
-					}
-					if(!addedW){
-						vertices(i,j)(current)(0) = centroids(i,j)(S)(0) - distanceToVertex;
-						vertices(i,j)(current)(1) = centroids(i,j)(S)(1);
-						current++;
-					}
-					addedS = true;
+					SEfromS(0) = centroids(i,j)(S)(0) + distanceToVertex;
+					SEfromS(1) = centroids(i,j)(S)(1);
+
+					SWfromS(0) = centroids(i,j)(S)(0) - distanceToVertex;
+					SWfromS(1) = centroids(i,j)(S)(1);
 				}
 				if(faceTypes(i,j)(W) != COVERED){
 					double distanceToVertex = (h/2)*areaFractions(i,j)(W);
-					if(!addedS){
-						vertices(i,j)(current)(0) = centroids(i,j)(W)(0);
-						vertices(i,j)(current)(1) = centroids(i,j)(W)(1) - distanceToVertex;
-						current++;
-					}
-					if(!addedN){
-						vertices(i,j)(current)(0) = centroids(i,j)(W)(0);
-						vertices(i,j)(current)(1) = centroids(i,j)(W)(1) + distanceToVertex;
-						current++;
-					}
-					addedW = true;
+					SWfromW(0) = centroids(i,j)(W)(0);
+					SWfromW(1) = centroids(i,j)(W)(1) - distanceToVertex;
+
+					NWfromW(0) = centroids(i,j)(W)(0);
+					NWfromW(1) = centroids(i,j)(W)(1) + distanceToVertex;
 				}
+
+				if(isFaceUncovered(i,j,N)){
+					vertices(i,j)(current) = NWfromN;
+					current++;
+
+					vertices(i,j)(current) = NEfromN;
+					current++;
+				}
+				if(isFaceUncovered(i,j,E)){
+					if(isFaceCovered(i,j,N) || centroids(i,j)(E)(1) < centers(i,j)(1)){
+						vertices(i,j)(current) = NEfromE;
+						current++;
+					}
+
+					vertices(i,j)(current) = SEfromE;
+					current++;
+				}
+				if(isFaceUncovered(i,j,S)){
+					if(isFaceCovered(i,j,E) || centroids(i,j)(S)(0) < centers(i,j)(0)){
+						vertices(i,j)(current) = SEfromS;
+						current++;
+					}
+
+					vertices(i,j)(current) = SWfromS;
+					current++;
+				}
+				if(isFaceUncovered(i,j,W)){
+					if(isFaceCovered(i,j,S) || centroids(i,j)(W)(1) > centers(i,j)(1)){
+						vertices(i,j)(current) = SWfromW;
+						current++;
+					}
+					if(isFaceCovered(i,j,N) || centroids(i,j)(W)(1) < centers(i,j)(1)){
+						vertices(i,j)(current) = NWfromW;
+						current++;
+					}
+				}
+
 				if(current > n){
-					cout << "Error. Added to many vertices in cell " << i << ", " << j << endl;
+					cout << "Error. Added too many vertices in cell " << i << ", " << j << endl;
 				}
 			}
 
@@ -404,7 +464,7 @@ namespace CFD{
 				}
 				return facesCovered;
 			}
-			virtual double calculateVolumeFractionBalls(int i, int j){
+			virtual double calculateVolumeFraction(int i, int j){
 				if(getCellType(i,j) == REGULAR){
 					return 1;
 				}
@@ -422,7 +482,7 @@ namespace CFD{
 				}
 			}
 
-			virtual double calculateVolumeFraction(int i, int j){
+			virtual double calculateVolumeFractionHmmm(int i, int j){
 				if(cellTypes(i,j) == REGULAR){
 					return 1;
 				}
@@ -751,7 +811,9 @@ namespace CFD{
 				xRange.setRange(1,iMax,1);
 				yRange.setRange(1,jMax,1);
 
-				centers.resize(xRange,yRange);
+				resizeAll();
+
+				/*centers.resize(xRange,yRange);
 				volumeFractions.resize(xRange,yRange);
 				cellTypes.resize(xRange,yRange);
 				centroids.resize(xRange,yRange);
@@ -760,7 +822,7 @@ namespace CFD{
 				outwardNormals.resize(xRange,yRange);
 				cellCentroids.resize(xRange,yRange);
 				numberOfVertices.resize(xRange,yRange);
-				vertices.resize(xRange,yRange);
+				vertices.resize(xRange,yRange);*/
 
 				for(int i = 1; i <= iMax; i++){
 					for(int j = 1; j <= jMax; j++){
@@ -1030,7 +1092,7 @@ namespace CFD{
 				}
 			}*/
 		public:
-			virtual double calculateVolumeFraction(int i, int j){
+			virtual double calculateVolumeFractionExactly(int i, int j){
 				if(cellTypes(i,j) == REGULAR){
 					return 1;
 				}

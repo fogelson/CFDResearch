@@ -1,5 +1,5 @@
 /*
- * mxApply.cpp
+ * mxSplit.cpp
  *
  *  Created on: Aug 29, 2011
  *      Author: fogelson
@@ -27,18 +27,20 @@ using namespace Multigrid;
  */
 
 /* The following command should be invoked from MATLAB:
- * [Lu] = mxInterpolate(u,h,offset)
+ *
+ * [uI,uP,u3,u4,u5] = mxSplit(h,offset,u)
  */
 void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]){
 	// Desired number of inputs and outputs
-	int inputs = 3;
-	int outputs = 1;
 
-	/* Check for proper number of arguments. */
+	int inputs = 3;
+	int outputs = 5;
+
 	if(nrhs != inputs){
 		mexErrMsgTxt("Wrong number of inputs.");
 	}
-	else if(nlhs > outputs){
+
+	if(nlhs > outputs){
 		mexErrMsgTxt("Too many outputs.");
 	}
 
@@ -47,33 +49,30 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]){
 	 * we want them to appear in arguments to the MATLAB
 	 * function call.
 	 */
-	double h = getMxDouble(prhs[1]);
-	double offset = getMxDouble(prhs[2]);
 
-	Grid * g = new Circle(h,1,offset);
-	//Grid * g = new UnitSquare(h,offset);
+	double h = getMxDouble(prhs[0]);
+	double offset = getMxDouble(prhs[1]);
+
+	Circle circ(h,1,offset);
+	Grid * g = &circ;
+
 	CellDoubleArray u = g->makeCellDoubleArray();
-	u = getMxArray(prhs[0]);
-	CellDoubleArray Lu = g->makeCellDoubleArray();
+	u = getMxArray(prhs[2]);
 
-	Stencil * stencil = new PoissonStencil(g);
+	CellDoubleArray uI = g->makeCellDoubleArray(), uP = g->makeCellDoubleArray();
+	CellDoubleArray u3 = g->makeCellDoubleArray();
+	CellDoubleArray u4 = g->makeCellDoubleArray();
+	CellDoubleArray u5 = g->makeCellDoubleArray();
 
-	Lu = stencil->apply(u);
+	uI = where(g->cellTypes == REGULAR, u, mxGetNaN());
+	uP = where(g->cellTypes == IRREGULAR, u, mxGetNaN());
+	u3 = where(g->numberOfVertices == 3, uP, mxGetNaN());
+	u4 = where(g->numberOfVertices == 4, uP, mxGetNaN());
+	u5 = where(g->numberOfVertices == 5, uP, mxGetNaN());
 
-	Lu = where(g->cellTypes == COVERED, mxGetNaN(), Lu);
-
-	//Lu = where(g->numberOfVertices == 3, mxGetNaN(), Lu);
-
-	// Set output pointers to the desired outputs
-	plhs[0] = setMxArray(Lu);
-
-	delete g;
-	delete stencil;
+	plhs[0] = setMxArray(uI);
+	plhs[1] = setMxArray(uP);
+	plhs[2] = setMxArray(u3);
+	plhs[3] = setMxArray(u4);
+	plhs[4] = setMxArray(u5);
 }
-/*
- * mxApply.cpp
- *
- *  Created on: Aug 29, 2011
- *      Author: fogelson
- */
-

@@ -1,13 +1,24 @@
+/*
+ * mxGetAreaRatios.cpp
+ *
+ *  Created on: Sep 29, 2011
+ *      Author: fogelson
+ */
+
 #include "mex.h"
 #include "matrix.h"
 #include "BlitzMatlab.h"
-#include "Geometry/Geometry.h"
-#include <string>
-#include <sstream>
-#include <stdlib.h>
 
-using namespace std;
+#include "Multigrid/IntergridOperators.h"
+#include "Geometry/Stencil.h"
+#include "Multigrid/Smoothers.h"
+#include "Multigrid/Stencils.h"
+#include "Multigrid/MultigridSolvers.h"
+
 using namespace blitzmatlab;
+using namespace CFD;
+using namespace Geometry;
+using namespace Multigrid;
 
 /* nlhs:	number of outputs to Matlab function
  * plhs:	array of pointers to the memory locations of the outputs
@@ -16,19 +27,20 @@ using namespace blitzmatlab;
  */
 
 /* The following command should be invoked from MATLAB:
- * [x,y,volumeFractions] = mxFileTemplate(h,offset)
+ *
+ * [rat] = mxGetAreaRatios(h,offset)
  */
-
 void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]){
 	// Desired number of inputs and outputs
-	int inputs = 2;
-	int outputs = 3;
 
-	/* Check for proper number of arguments. */
+	int inputs = 2;
+	int outputs = 1;
+
 	if(nrhs != inputs){
 		mexErrMsgTxt("Wrong number of inputs.");
 	}
-	else if(nlhs > outputs){
+
+	if(nlhs > outputs){
 		mexErrMsgTxt("Too many outputs.");
 	}
 
@@ -37,21 +49,18 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]){
 	 * we want them to appear in arguments to the MATLAB
 	 * function call.
 	 */
+
 	double h = getMxDouble(prhs[0]);
 	double offset = getMxDouble(prhs[1]);
 
-	// Do something with the data
-	CFD::Geometry::Grid * grid = new CFD::Geometry::Circle(h,1,offset);
-	//CFD::Geometry::Grid * grid = new CFD::Geometry::UnitSquare(h,offset);
+	Circle circ(h,1,offset);
+	Grid * g = &circ;
 
-	CellDoubleArray x = grid->centers.extractComponent(double(),0,2);
-	CellDoubleArray y = grid->centers.extractComponent(double(),1,2);
-	CellDoubleArray volumeFractions = grid->volumeFractions;
+	CellDoubleArray u = g->makeCellDoubleArray();
+	g->calculateRatios();
 
-	// Set output pointers to the desired outputs
-	plhs[0] = setMxArray(x);
-	plhs[1] = setMxArray(y);
-	plhs[2] = setMxArray(volumeFractions);
+	u = g->lengthRatios;
+	u = where(g->cellTypes != COVERED, u, mxGetNaN());
 
-	delete grid;
+	plhs[0] = setMxArray(u);
 }

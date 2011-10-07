@@ -11,13 +11,11 @@
 #ifndef BLITZMATLAB_H_
 #define BLITZMATLAB_H_
 
-#include "Geometry/Geometry.h"
 #include "mex.h"
 #include "matrix.h"
 #include <blitz/array.h>
 
 using namespace blitz;
-using namespace CFD::Geometry;
 
 namespace blitzmatlab{
 	mxArray* setMxDouble(double d){
