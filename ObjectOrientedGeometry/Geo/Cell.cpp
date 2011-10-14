@@ -201,6 +201,9 @@ Face * Cell::getFace(Direction d){
 void Cell::setCenter(Coord c){
 	center = c;
 }
+Coord Cell::getCenter(){
+	return center;
+}
 
 /* If the cell doesn't have a boundary pointer and
  * needs one, this method creates a new one and

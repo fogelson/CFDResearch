@@ -5,16 +5,17 @@
  *      Author: fogelson
  */
 
-#include "mex.h"
-#include "matrix.h"
-#include "../BlitzMatlab.h"
+#include "MexTools/MexTools.h"
 #include "Geo/Geometry.h"
+#include "Ops/Operators.h"
 #include <vector>
 
 using namespace std;
 
 using namespace blitzmatlab;
 using namespace CFD::OOGeometry;
+using namespace CFD::OOOps;
+using namespace CFD::OOMexTools;
 
 /* nlhs:	number of outputs to Matlab function
  * plhs:	array of pointers to the memory locations of the outputs
@@ -39,6 +40,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]){
 		mexErrMsgTxt("Too many outputs.");
 	}
 
+	MexPlotTool plotter;
 
 	double h, r, offset;
 
@@ -46,51 +48,67 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]){
 	r = getMxDouble(prhs[1]);
 	offset = getMxDouble(prhs[2]);
 
+	double pi = acos(-1);
+
 	Circle * g = new Circle(h,r,offset);
-	/*mexEvalString("figure; hold on;");
 
-	vector<Face*>::iterator it;
-	for(it = g->faces.begin(); it != g->faces.end(); it++){
-		Face * curr = (*it);
-
-		Coord a, b;
-		a = curr->getA()->getCoord();
-		b = curr->getB()->getCoord();
-		Array<double,2> x(2,1);
-		Array<double,2> y(2,1);
-
-
-		x(0,0) = a(0);
-		x(1,0) = b(0);
-		y(0,0) = a(1);
-		y(1,0) = b(1);
-
-		int nlhsPlot = 0;
-		int nrhsPlot = 2;
-		mxArray * plhsPlot[0];
-		mxArray * prhsPlot[2];
-		prhsPlot[0] = setMxArray(x);
-		prhsPlot[1] = setMxArray(y);
-
-		if(curr->isUncovered()){
-			//cout << "Plotting face from " << a << " to " << b << endl;
-			mexCallMATLAB(nlhsPlot,plhsPlot,nrhsPlot,prhsPlot,"plot");
+	CellDoubleArray xC = g->makeCellDoubleArray();
+	CellDoubleArray yC = g->makeCellDoubleArray();
+	for(int i = g->iMin; i <= g->iMax; i++){
+		for(int j = g->jMin; j <= g->jMax; j++){
+			xC(i,j) = g->cells(i,j)->getCenter()(0);
+			yC(i,j) = g->cells(i,j)->getCenter()(1);
 		}
+	}
+	CellDoubleArray RC = g->makeCellDoubleArray();
+	RC = sqrt(pow2(xC) + pow2(yC));
 
-	}*/
+	CellDoubleArray u = g->makeCellDoubleArray();
+	u = cos(2*pi*RC);
 
-	CellDoubleArray cda;// = Arrays::makeCellDoubleArray(g);
-	cda.resize(g->xRange,g->yRange);
-	cda = 0;
-	FaceDoubleArray fda;
-	fda.resize(g->faces.size());
-	fda = 0;
-	VertexDoubleArray vda;
-	vda.resize(g->vertices.size());
-	vda = 0;
-	//FaceDoubleArray fda = Arrays::makeFaceDoubleArray(g);
-	//VertexDoubleArray vda = Arrays::makeVertexDoubleArray(g);
+	FaceDoubleArray xF = g->makeFaceDoubleArray();
+	FaceDoubleArray yF = g->makeFaceDoubleArray();
+	for(int k = 0; k < g->faces.size(); k++){
+		xF(k) = g->faces[k]->getCentroid()(0);
+		yF(k) = g->faces[k]->getCentroid()(1);
+	}
+
+	FaceDoubleArray RF = g->makeFaceDoubleArray();
+	RF = sqrt(pow2(xF) + pow2(yF));
+
+	FaceDoubleArray gradUExact = g->makeFaceDoubleArray();
+	gradUExact = -2*pi*sin(2*pi*RF);
+
+	FaceDoubleArray gradUNum = g->makeFaceDoubleArray();
+	Gradient grad(g);
+	gradUNum = grad(u);
+
+	FaceDoubleArray gradUErr = g->makeFaceDoubleArray();
+	gradUErr = abs(gradUNum - gradUExact);
+
+	for(int k = 0; k < g->faces.size(); k++){
+		if(g->faces[k]->isIrregular()){
+			gradUErr(k) = 100;
+		}
+	}
+
+	double gradUErrNorm;
+	gradUErrNorm = max(gradUErr);
+
+	cout << gradUErrNorm << endl;
+
+	/*string graph = "graphCellDoubleArray";
+	plotter.newFigure();
+	plotter.graphCellDoubleArray(u,g,graph);
+	plotter.holdOn();
+	plotter.drawGrid(g);
+	plotter.graphFaceDoubleArray(gradUExact,g);
+
+	plotter.newFigure();
+	plotter.graphCellDoubleArray(u,g,graph);
+	plotter.holdOn();
+	plotter.drawGrid(g);
+	plotter.graphFaceDoubleArray(gradUNum,g);*/
 
 	delete g;
-	return;
 }

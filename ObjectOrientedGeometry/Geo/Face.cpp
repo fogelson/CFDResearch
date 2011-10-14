@@ -20,6 +20,7 @@ namespace OOGeometry{
  */
 
 Face::Face(){
+	normal = 0;
 	vertexA = 0;
 	vertexB = 0;
 	upToDate = false;
@@ -64,17 +65,32 @@ void Face::setVertexB(Vertex * vertexB){
 	this->vertexB = vertexB;
 	upToDate = false;
 }
-double Face::getArea(){
+
+void Face::update(){
 	if(upToDate){
-		return area;
+		return;
 	}
+
 	double x0, y0, x1, y1;
 	x0 = (*vertexA)(0);
 	y0 = (*vertexA)(1);
 	x1 = (*vertexB)(0);
 	y1 = (*vertexB)(1);
 	area = sqrt(pow2(x1 - x0) + pow2(y1 - y0));
+
+	centroid(0) = (x0 + x1)/2;
+	centroid(1) = (y0 + y1)/2;
+
 	upToDate = true;
+}
+
+Coord Face::getCentroid(){
+	update();
+	return centroid;
+}
+
+double Face::getArea(){
+	update();
 	return area;
 }
 bool Face::hasA(){
@@ -82,6 +98,13 @@ bool Face::hasA(){
 }
 bool Face::hasB(){
 	return vertexB != 0;
+}
+
+void Face::setNormal(TinyVector<double,2> normal){
+	this->normal = normal;
+}
+TinyVector<double,2> Face::getNormal(){
+	return normal;
 }
 
 

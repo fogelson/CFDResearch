@@ -27,7 +27,7 @@ bool Circle::contains(Coord c){
 	return contains(c(0),c(1));
 }
 bool Circle::contains(double x, double y){
-	return (pow2(x) + pow2(y) <= pow2(r));
+	return (pow2(x) + pow2(y) < pow2(r));
 }
 
 void Circle::grid(){
@@ -219,6 +219,54 @@ void Circle::grid(){
 			}
 			Face * fB = c->createBoundary();
 			addFace(fB);
+			if(fB != 0){
+			double xC, yC, x1, x2, y1, y2;
+			xC = fB->getCentroid()(0);
+			yC = fB->getCentroid()(1);
+			x1 = fB->getA()->getCoord()(0);
+			y1 = fB->getA()->getCoord()(1);
+			x2 = fB->getB()->getCoord()(0);
+			y2 = fB->getB()->getCoord()(1);
+			TinyVector<double,2> normal;
+				if(xC > 0){
+					if(y1 >= y2){
+						normal(0) = y1 - y2;
+						normal(1) = x2 - x1;
+					}
+					else{
+						normal(0) = y2 - y1;
+						normal(1) = x1 - x2;
+					}
+				}
+				else if(xC == 0){
+					if(yC > 0){
+						normal(0) = 0;
+						normal(1) = 1;
+					}
+					else if(yC < 0){
+						normal(0) = 0;
+						normal(1) = -1;
+					}
+					else{
+						cout << "Somehow the Circle.cpp grid code thinks there is"
+								<< " a boundary cell at the center of the circle."
+								<< " Fix that." << endl;
+					}
+				}
+				else{
+					if(y1 >= y2){
+						normal(0) = y2 - y1;
+						normal(1) = x1 - x2;
+					}
+					else{
+						normal(0) = y1 - y2;
+						normal(1) = x2 - x1;
+					}
+				}
+				double r = sqrt(pow2(normal(0)) + pow2(normal(1)));
+				normal = normal/r;
+				fB->setNormal(normal);
+			}
 		}
 	}
 }

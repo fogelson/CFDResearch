@@ -1,0 +1,5 @@
+cd Geo
+g++-4.3 -c -I/opt/pkg/mathworks/matlab-2011a/extern/include -I/opt/pkg/mathworks/matlab-2011a/simulink/include -DMATLAB_MEX_FILE -ansi -D_GNU_SOURCE -fPIC -fno-omit-frame-pointer -pthread  -DMX_COMPAT_32 -O -DNDEBUG  *.cpp
+cd ..
+ar cr libgeomx.a Geo/*.o
+rm Geo/*.o

@@ -92,6 +92,10 @@ void Grid::tile(double xMin, double yMin, double xMax, double yMax){
 			if(!current->hasFace(N)){
 				Face * newFace = createFace();
 				current->setFace(newFace,N);
+				TinyVector<double,2> normal;
+				normal(0) = 0;
+				normal(1) = 1;
+				newFace->setNormal(normal);
 				if(j+1 <= jMax){
 					cells(i,j+1)->setFace(newFace,S);
 				}
@@ -99,6 +103,10 @@ void Grid::tile(double xMin, double yMin, double xMax, double yMax){
 			if(!current->hasFace(S)){
 				Face * newFace = createFace();
 				current->setFace(newFace,S);
+				TinyVector<double,2> normal;
+				normal(0) = 0;
+				normal(1) = 1;
+				newFace->setNormal(normal);
 				if(j-1 >= jMin){
 					cells(i,j-1)->setFace(newFace,N);
 				}
@@ -106,6 +114,10 @@ void Grid::tile(double xMin, double yMin, double xMax, double yMax){
 			if(!current->hasFace(E)){
 				Face * newFace = createFace();
 				current->setFace(newFace,E);
+				TinyVector<double,2> normal;
+				normal(0) = 1;
+				normal(1) = 0;
+				newFace->setNormal(normal);
 				if(i+1 <= iMax){
 					cells(i+1,j)->setFace(newFace,W);
 				}
@@ -113,6 +125,10 @@ void Grid::tile(double xMin, double yMin, double xMax, double yMax){
 			if(!current->hasFace(W)){
 				Face * newFace = createFace();
 				current->setFace(newFace,W);
+				TinyVector<double,2> normal;
+				normal(0) = 1;
+				normal(1) = 0;
+				newFace->setNormal(normal);
 				if(i-1 >= iMin){
 					cells(i-1,j)->setFace(newFace,E);
 				}
@@ -275,6 +291,8 @@ void Grid::addVertex(Vertex * v){
 
 CellDoubleArray Grid::makeCellDoubleArray(){
 	CellDoubleArray out;
+	out.resize(xRange,yRange);
+	out = 0;
 	return out;/*
 	CellDoubleArray out;
 	out.resize(xRange, yRange);
@@ -289,6 +307,8 @@ CellDoubleArray Grid::makeCellDoubleArray(){
 
 FaceDoubleArray Grid::makeFaceDoubleArray(){
 	FaceDoubleArray out;
+	out.resize(faces.size());
+	out = 0;
 	return out;
 	/*faceRange.setRange(0,faces.size()-1);
 	FaceDoubleArray * out;
@@ -300,6 +320,8 @@ FaceDoubleArray Grid::makeFaceDoubleArray(){
 
 VertexDoubleArray Grid::makeVertexDoubleArray(){
 	VertexDoubleArray out;
+	out.resize(vertices.size());
+	out = 0;
 	return out;/*
 	vertexRange.setRange(0,vertices.size()-1);
 	VertexDoubleArray out;
@@ -319,6 +341,57 @@ void Grid::resizeFaceDoubleArray(FaceDoubleArray & f){
 void Grid::resizeVertexDoubleArray(VertexDoubleArray & v){
 	v.resize(vertices.size());
 	v = 0;
+}
+
+Type Grid::getCellType(int i, int j){
+	if(cells(i,j) == 0){
+		return COVERED;
+	}
+	return cells(i,j)->getType();
+}
+Type Grid::getFaceType(int i, int j, Direction d){
+	if(cells(i,j) == 0){
+		return COVERED;
+	}
+	if(cells(i,j)->getFace(d) == 0){
+		return COVERED;
+	}
+	return cells(i,j)->getFace(d)->getType();
+}
+bool Grid::isUncovered(int i, int j){
+	return getCellType(i,j) != COVERED;
+}
+bool Grid::isCovered(int i, int j){
+	return getCellType(i,j) == COVERED;
+}
+bool Grid::isRegular(int i, int j){
+	return getCellType(i,j) == REGULAR;
+}
+bool Grid::isIrregular(int i, int j){
+	return getCellType(i,j) == IRREGULAR;
+}
+bool Grid::isFaceUncovered(int i, int j, Direction d){
+	return getFaceType(i,j,d) != COVERED;
+}
+bool Grid::isFaceCovered(int i, int j, Direction d){
+	return getFaceType(i,j,d) == COVERED;
+}
+bool Grid::isFaceRegular(int i, int j, Direction d){
+	return getFaceType(i,j,d) == REGULAR;
+}
+bool Grid::isFaceIrregular(int i, int j, Direction d){
+	return getFaceType(i,j,d) == IRREGULAR;
+}
+
+Array<Type,2> Grid::getCellTypes(){
+	Array<Type,2> out;
+	out.resize(xRange,yRange);
+	for(int i = iMin; i <= iMax; i++){
+		for(int j = jMin; j <= jMax; j++){
+			out(i,j) = getCellType(i,j);
+		}
+	}
+	return out;
 }
 
 }

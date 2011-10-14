@@ -31,7 +31,7 @@
 <listOptionValue builtIn="false" value="fftw"/>
 <listOptionValue builtIn="false" value="lapackpp"/>
 </option>
-<option id="macosx.cpp.link.option.paths.1367523547" name="Library search path (-L)" superClass="macosx.cpp.link.option.paths" valueType="libPaths"/>
+<option id="macosx.cpp.link.option.paths.1367523547" name="Library search path (-L)" superClass="macosx.cpp.link.option.paths"/>
 <option id="macosx.cpp.link.option.flags.1429177375" name="Linker flags" superClass="macosx.cpp.link.option.flags" value="-m64" valueType="string"/>
 <inputType id="cdt.managedbuild.tool.macosx.cpp.linker.input.2133037469" superClass="cdt.managedbuild.tool.macosx.cpp.linker.input">
 <additionalInput kind="additionalinputdependency" paths="$(USER_OBJS)"/>
@@ -71,12 +71,12 @@
 <fileInfo id="cdt.managedbuild.config.gnu.macosx.exe.debug.2062944875.1045649261" name="BlitzMatlab.h" rcbsApplicability="disable" resourcePath="BlitzMatlab.h" toolsToInvoke=""/>
 <fileInfo id="cdt.managedbuild.config.gnu.macosx.exe.debug.2062944875.224262122" name="mxApply.cpp" rcbsApplicability="disable" resourcePath="mxApply.cpp" toolsToInvoke=""/>
 <sourceEntries>
-<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="Solvers"/>
-<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="Multigrid"/>
+<entry excluding="mxJacobi.cpp|mxGetEBComponents.cpp|ConfigFile/example.cpp|mxMultigrid.cpp|FENE/FENEMain.cpp|solveTridiag.cpp|mxStenciledMultigrid.cpp|mxAdvectionTest.cpp|mxRestrict.cpp|mxGetAreaRatios.cpp|Solvers|mxLoadSteadyFlow.cpp|mxPoissonMultigrid.cpp|mxMakeLaplacian.cpp|ObjectOrientedGeometry|mxSmooth.cpp|mxGetGridInfo.cpp|FENE/Oldb_effdiff.cpp|mxInterpolate.cpp|mxSplit.cpp|StencilTester.cpp|Multigrid|mxSmootherTest.cpp|Geometry|steadyFlowTester.cpp|mxApply.cpp|LinearAlgebra|mxBilinearInterpolation.cpp|mxSolveTridiag.cpp|FiniteDifference.cpp|GeometryCode|FENE/FENE_effdiff_header.h|mxConjugateGradients.cpp|ConfigFile/tester.cpp|mxForwardEulerAdvectionDiffusion.cpp|mxFENESolver.cpp|mxFileTemplate.cpp|BlitzMatlab.h|mxForwardEulerDiffusion.cpp|mxSteadyFlowFromFile.cpp|Geo|ConfigFile/Triplet.h|mxDrawGrid.cpp" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
+<entry excluding="Ops" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="ObjectOrientedGeometry"/>
 <entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="Geometry"/>
 <entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="LinearAlgebra"/>
-<entry excluding="mxGetEBComponents.cpp|mxJacobi.cpp|ConfigFile/example.cpp|FENE/FENEMain.cpp|mxMultigrid.cpp|solveTridiag.cpp|mxStenciledMultigrid.cpp|mxAdvectionTest.cpp|mxRestrict.cpp|mxGetAreaRatios.cpp|mxLoadSteadyFlow.cpp|Solvers|mxPoissonMultigrid.cpp|mxMakeLaplacian.cpp|ObjectOrientedGeometry|mxSmooth.cpp|FENE/Oldb_effdiff.cpp|mxGetGridInfo.cpp|mxInterpolate.cpp|mxSplit.cpp|StencilTester.cpp|Multigrid|mxSmootherTest.cpp|Geometry|mxApply.cpp|steadyFlowTester.cpp|LinearAlgebra|mxBilinearInterpolation.cpp|mxSolveTridiag.cpp|FiniteDifference.cpp|GeometryCode|FENE/FENE_effdiff_header.h|mxConjugateGradients.cpp|ConfigFile/tester.cpp|mxFENESolver.cpp|mxForwardEulerAdvectionDiffusion.cpp|mxFileTemplate.cpp|mxSteadyFlowFromFile.cpp|mxForwardEulerDiffusion.cpp|BlitzMatlab.h|ConfigFile/Triplet.h|Geo|mxDrawGrid.cpp" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
-<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="ObjectOrientedGeometry"/>
+<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="Multigrid"/>
+<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="Solvers"/>
 </sourceEntries>
 </configuration>
 </storageModule>
@@ -1137,12 +1137,12 @@
 </toolChain>
 </folderInfo>
 <sourceEntries>
-<entry excluding="Geo|GeometryCode" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="ObjectOrientedGeometry"/>
-<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="Multigrid"/>
-<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="LinearAlgebra"/>
 <entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="Solvers"/>
 <entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="Geometry"/>
+<entry excluding="Ops|Geo|GeometryCode" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="ObjectOrientedGeometry"/>
 <entry excluding="Geo|GeometryCode|mxSplit.cpp|mxSmooth.cpp|mxRestrict.cpp|mxInterpolate.cpp|mxGetEBComponents.cpp|mxGetAreaRatios.cpp|mxDrawGrid.cpp|mxApply.cpp|ObjectOrientedGeometry|mxFENESolver.cpp|ConfigFile/Triplet.h|ConfigFile/tester.cpp|ConfigFile/example.cpp|mxAdvectionTest.cpp|StencilTester.cpp|steadyFlowTester.cpp|FiniteDifference.cpp|mxLoadSteadyFlow.cpp|FENE|Solvers|Geometry|LinearAlgebra|Multigrid" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
+<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="Multigrid"/>
+<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="LinearAlgebra"/>
 </sourceEntries>
 </configuration>
 </storageModule>

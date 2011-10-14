@@ -112,8 +112,11 @@ public:
 	Vertex * vertexA, * vertexB;
 	Cell * cell1, *cell2;
 	Coord centroid;
+	TinyVector<double,2> normal;
 	bool upToDate;
 	double area;
+
+	void update();
 public:
 	Face();
 	Vertex * getVertexA();
@@ -128,6 +131,11 @@ public:
 
 	double getArea();
 	double getAreaFraction();
+
+	Coord getCentroid();
+
+	void setNormal(TinyVector<double,2> normal);
+	TinyVector<double,2> getNormal();
 
 	bool hasA();
 	bool hasB();
@@ -179,6 +187,17 @@ public:
 	void addVertex(Vertex * v);
 	void addCell(Cell * c, int i, int j);
 	double getVolume();
+	Type getCellType(int i, int j);
+	Type getFaceType(int i, int j, Direction d);
+	bool isUncovered(int i, int j);
+	bool isCovered(int i, int j);
+	bool isRegular(int i, int j);
+	bool isIrregular(int i, int j);
+	bool isFaceUncovered(int i, int j, Direction d);
+	bool isFaceCovered(int i, int j, Direction d);
+	bool isFaceRegular(int i, int j, Direction d);
+	bool isFaceIrregular(int i, int j, Direction d);
+	Array<Type,2> getCellTypes();
 };
 
 class Circle : public Grid{
