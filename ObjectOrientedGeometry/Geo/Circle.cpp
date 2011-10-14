@@ -52,7 +52,10 @@ void Circle::grid(){
 			else{
 				c->setType(COVERED);
 				// North face
-				if(contains(c->getFace(N))){
+				if(c->getFace(N)->isUncovered()){
+					c->setType(IRREGULAR);
+				}
+				else if(contains(c->getFace(N))){
 					c->setType(IRREGULAR);
 					c->getFace(N)->setType(REGULAR);
 				}
@@ -93,7 +96,10 @@ void Circle::grid(){
 				}
 
 				// South face
-				if(contains(c->getFace(S))){
+				if(c->getFace(S)->isUncovered()){
+					c->setType(IRREGULAR);
+				}
+				else if(contains(c->getFace(S))){
 					Face * fS = c->getFace(S);
 
 					c->setType(IRREGULAR);
@@ -136,7 +142,10 @@ void Circle::grid(){
 				}
 
 				// East face
-				if(contains(c->getFace(E))){
+				if(c->getFace(E)->isUncovered()){
+					c->setType(IRREGULAR);
+				}
+				else if(contains(c->getFace(E))){
 					c->setType(IRREGULAR);
 					c->getFace(E)->setType(REGULAR);
 				}
@@ -177,7 +186,10 @@ void Circle::grid(){
 				}
 
 				// West face
-				if(contains(c->getFace(W))){
+				if(c->getFace(W)->isUncovered()){
+					c->setType(IRREGULAR);
+				}
+				else if(contains(c->getFace(W))){
 					c->setType(IRREGULAR);
 					c->getFace(W)->setType(REGULAR);
 				}
@@ -220,15 +232,21 @@ void Circle::grid(){
 			Face * fB = c->createBoundary();
 			addFace(fB);
 			if(fB != 0){
-			double xC, yC, x1, x2, y1, y2;
-			xC = fB->getCentroid()(0);
-			yC = fB->getCentroid()(1);
-			x1 = fB->getA()->getCoord()(0);
-			y1 = fB->getA()->getCoord()(1);
-			x2 = fB->getB()->getCoord()(0);
-			y2 = fB->getB()->getCoord()(1);
-			TinyVector<double,2> normal;
-				if(xC > 0){
+				fB->setType(IRREGULAR);
+				double xC, yC, x1, x2, y1, y2;
+				xC = fB->getCentroid()(0);
+				yC = fB->getCentroid()(1);
+				x1 = fB->getA()->getCoord()(0);
+				y1 = fB->getA()->getCoord()(1);
+				x2 = fB->getB()->getCoord()(0);
+				y2 = fB->getB()->getCoord()(1);
+				TinyVector<double,2> normal;
+
+				double theta = atan2(yC,xC);
+				normal(0) = cos(theta);
+				normal(1) = sin(theta);
+
+				/*if(xC > 0){
 					if(y1 >= y2){
 						normal(0) = y1 - y2;
 						normal(1) = x2 - x1;
@@ -264,7 +282,7 @@ void Circle::grid(){
 					}
 				}
 				double r = sqrt(pow2(normal(0)) + pow2(normal(1)));
-				normal = normal/r;
+				normal = normal/r;*/
 				fB->setNormal(normal);
 			}
 		}

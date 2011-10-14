@@ -88,7 +88,7 @@ namespace blitzmatlab{
 
 	mxArray* setMxVector(Array<double,1> rowMajor){
 		Array<double,2> asArray(rowMajor.size(),1);
-		asArray(Range::all(),1) = rowMajor(Range::all());
+		asArray(Range::all(),0) = rowMajor(Range::all());
 		return setMxArray(asArray);/*
 
 		mwSize rows, cols;

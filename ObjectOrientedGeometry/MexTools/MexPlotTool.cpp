@@ -57,13 +57,46 @@ void MexPlotTool::drawGrid(Grid * g){
 	}
 }
 
+void MexPlotTool::plotFaceDoubleArrayXLine(FaceDoubleArray & u, Grid * g, int i, Direction d){
+	FaceDoubleArray x = g->getFaceX();
+	FaceDoubleArray y = g->getFaceY();
+
+	vector<Face*> faces;
+
+	for(int j = g->jMin; j <= g->jMax; j++){
+		if(g->isFaceUncovered(i,j,d)){
+			faces.push_back(g->cells(i,j)->getFace(N));
+		}
+	}
+
+	Array<double,1> yOut(faces.size());
+	Array<double,1> uOut(faces.size());
+
+	double pos = 0;
+
+	for(int k = 0; k < faces.size(); k++){
+		yOut(k) = pos;
+		pos += faces[k]->getArea();
+		uOut(k) = u(faces[k]->getIndex());
+	}
+	int nlhs = 0;
+	int nrhs = 2;
+	mxArray * plhs[nlhs];
+	mxArray * prhs[nrhs];
+
+	prhs[0] = setMxVector(yOut);
+	prhs[1] = setMxVector(uOut);
+
+	mexCallMATLAB(nlhs,plhs,nrhs,prhs,"plot");
+}
+
 void MexPlotTool::graphFaceDoubleArray(FaceDoubleArray & u, Grid * g){
 	FaceDoubleArray x = g->makeFaceDoubleArray();
 	FaceDoubleArray y = g->makeFaceDoubleArray();
 	FaceDoubleArray nX = g->makeFaceDoubleArray();
 	FaceDoubleArray nY = g->makeFaceDoubleArray();
 	for(int k = 0; k < g->faces.size(); k++){
-		if(g->faces[k] != 0 && g->faces[k]->isUncovered()){
+		if(g->faces[k] != 0 && true){// g->faces[k]->isUncovered()){
 			x(k) = g->faces[k]->getCentroid()(0);
 			y(k) = g->faces[k]->getCentroid()(1);
 			/*Coord A, B;

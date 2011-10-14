@@ -11,8 +11,8 @@
 #include <string>
 #include "BlitzMatlab.h"
 #include "../Geo/Geometry.h"
-#include "/opt/pkg/mathworks/matlab-2011a/extern/include/mex.h"
-#include "/opt/pkg/mathworks/matlab-2011a/extern/include/matrix.h"
+#include "/Applications/MATLAB_R2010a.app/extern/include/mex.h"
+#include "/Applications/MATLAB_R2010a.app/extern/include/matrix.h"
 
 namespace CFD{
 using namespace OOGeometry;
@@ -30,6 +30,7 @@ public:
 	void graphCellDoubleArray(CellDoubleArray & u, Grid * g, string graphCommand);
 	void graphFaceDoubleArray(FaceDoubleArray & u, Grid * g);
 	void drawGrid(Grid * g);
+	void plotFaceDoubleArrayXLine(FaceDoubleArray & u, Grid * g, int i, Direction d);
 };
 
 }

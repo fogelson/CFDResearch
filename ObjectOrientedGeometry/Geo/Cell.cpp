@@ -153,7 +153,7 @@ void Cell::update(){
 	}
 	centroid /= 6*signedVolume;
 
-	upToDate = true;
+	//upToDate = true;
 }
 
 Coord Cell::getCentroid(){

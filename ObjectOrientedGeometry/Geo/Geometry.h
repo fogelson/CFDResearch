@@ -198,6 +198,14 @@ public:
 	bool isFaceRegular(int i, int j, Direction d);
 	bool isFaceIrregular(int i, int j, Direction d);
 	Array<Type,2> getCellTypes();
+	Array<Type,1> getFaceTypes();
+	Array<Type,1> getVertexTypes();
+	CellDoubleArray getCellX();
+	CellDoubleArray getCellY();
+	FaceDoubleArray getFaceX();
+	FaceDoubleArray getFaceY();
+	VertexDoubleArray getVertexX();
+	VertexDoubleArray getVertexY();
 };
 
 class Circle : public Grid{

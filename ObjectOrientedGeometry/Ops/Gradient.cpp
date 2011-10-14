@@ -16,7 +16,14 @@ using namespace OOGeometry;
 namespace OOOps{
 
 void Gradient::interpolateIrregularFace(double alpha, CellToFaceIndex ind1, CellToFaceIndex ind2, CellToFaceIndex ind3, CellToFaceIndex ind4){
-	double c1, c2, c3, c4;
+	double c1, c2;
+	double h = g->getH();
+	c1 = -1/h;
+	c2 = 1/h;
+	coefficients[ind1] = c1;
+	coefficients[ind2] = c2;
+
+	/*double c1, c2, c3, c4;
 	double h = g->getH();
 	c1 = -(h - alpha)/(pow2(h));
 	c2 =  (h - alpha)/(pow2(h));
@@ -25,7 +32,7 @@ void Gradient::interpolateIrregularFace(double alpha, CellToFaceIndex ind1, Cell
 	coefficients[ind1] = c1;
 	coefficients[ind2] = c2;
 	coefficients[ind3] = c3;
-	coefficients[ind4] = c4;
+	coefficients[ind4] = c4;*/
 }
 
 Gradient::Gradient(Grid * g){

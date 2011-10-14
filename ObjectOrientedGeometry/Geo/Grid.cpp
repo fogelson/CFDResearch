@@ -394,5 +394,71 @@ Array<Type,2> Grid::getCellTypes(){
 	return out;
 }
 
+Array<Type,1> Grid::getFaceTypes(){
+	Array<Type,1> out;
+	out.resize(faces.size());
+	for(int k = 0; k < faces.size(); k++){
+		out(k) = faces[k]->getType();
+	}
+	return out;
+}
+
+Array<Type,1> Grid::getVertexTypes(){
+	Array<Type,1> out;
+	out.resize(vertices.size());
+	for(int k = 0; k < vertices.size(); k++){
+		out(k) = vertices[k]->getType();
+	}
+	return out;
+}
+
+CellDoubleArray Grid::getCellX(){
+	CellDoubleArray out = makeCellDoubleArray();
+	for(int i = iMin; i <= iMax; i++){
+		for(int j = jMin; j <= jMax; j++){
+			out(i,j) = cells(i,j)->getCenter()(0);
+		}
+	}
+	return out;
+}
+CellDoubleArray Grid::getCellY(){
+	CellDoubleArray out = makeCellDoubleArray();
+	for(int i = iMin; i <= iMax; i++){
+		for(int j = jMin; j <= jMax; j++){
+			out(i,j) = cells(i,j)->getCenter()(1);
+		}
+	}
+	return out;
+
+}
+FaceDoubleArray Grid::getFaceX(){
+	FaceDoubleArray out = makeFaceDoubleArray();
+	for(int k = 0; k < faces.size(); k++){
+		out(k) = faces[k]->getCentroid()(0);
+	}
+	return out;
+}
+FaceDoubleArray Grid::getFaceY(){
+	FaceDoubleArray out = makeFaceDoubleArray();
+	for(int k = 0; k < faces.size(); k++){
+		out(k) = faces[k]->getCentroid()(1);
+	}
+	return out;
+}
+VertexDoubleArray Grid::getVertexX(){
+	VertexDoubleArray out = makeVertexDoubleArray();
+	for(int k = 0; k < vertices.size(); k++){
+		out(k) = vertices[k]->getCoord()(0);
+	}
+	return out;
+}
+VertexDoubleArray Grid::getVertexY(){
+	VertexDoubleArray out = makeVertexDoubleArray();
+	for(int k = 0; k < vertices.size(); k++){
+		out(k) = vertices[k]->getCoord()(1);
+	}
+	return out;
+}
+
 }
 }

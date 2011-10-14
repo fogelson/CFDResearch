@@ -25,6 +25,7 @@ Face::Face(){
 	vertexB = 0;
 	upToDate = false;
 	area = 0;
+	setType(COVERED);
 }
 
 Vertex * Face::getA(){
@@ -81,7 +82,7 @@ void Face::update(){
 	centroid(0) = (x0 + x1)/2;
 	centroid(1) = (y0 + y1)/2;
 
-	upToDate = true;
+	//upToDate = true;
 }
 
 Coord Face::getCentroid(){
