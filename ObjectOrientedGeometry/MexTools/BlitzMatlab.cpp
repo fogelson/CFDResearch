@@ -114,7 +114,11 @@ namespace blitzmatlab{
 	}
 
 	Array<double,1> getMxVector(const mxArray *mx){
-		mwSize rows, cols;
+		Array<double,2> asArray = getMxArray(mx);
+		Array<double,1> asVector(asArray.length(0));
+		asVector(Range::all()) = asArray(Range::all(),0);
+		return asVector;
+		/*mwSize rows, cols;
 		int m, n;
 		double *mxPointer, *blitzPointer;
 		rows = mxGetM(mx);
@@ -132,7 +136,7 @@ namespace blitzmatlab{
 
 		Array<double,1> rowMajor(m,n);
 		rowMajor = columnMajor;
-		return rowMajor;
+		return rowMajor;*/
 	}
 
 /*	GridScalar restrictToGrid(GridScalar u, CoordTypeArray types){

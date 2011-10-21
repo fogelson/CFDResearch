@@ -23,7 +23,6 @@ void Cell::update(){
 	}
 
 	numberOfFaces = 0;
-
 	vertices.clear();
 
 	if(faces(N) != 0 && faces(N)->isUncovered()){
@@ -156,6 +155,22 @@ void Cell::update(){
 	//upToDate = true;
 }
 
+void Cell::setI(int i){
+	this->i = i;
+}
+
+void Cell::setJ(int j){
+	this->j = j;
+}
+
+int Cell::getI(){
+	return i;
+}
+
+int Cell::getJ(){
+	return j;
+}
+
 Coord Cell::getCentroid(){
 	update();
 	return centroid;
@@ -183,6 +198,35 @@ int Cell::getNumberOfVertices(){
 vector<Vertex*> Cell::getVertices(){
 	update();
 	return vertices;
+}
+
+/* Returns a vector of pointers to the cell's uncovered
+ * faces. The order is not likely to be correct. The
+ * main purpose of this method is just so that other classes
+ * can quickly iterate through the cell's uncovered faces
+ * without needing to check which ones are uncovered.
+ *
+ * Anything that require iterating in a particular order
+ * should be done with more care.
+ */
+vector<Face*> Cell::getFaces(){
+	vector<Face*> out;
+	if(faces(N) != 0 && faces(N)->isUncovered()){
+		out.push_back(faces(N));
+	}
+	if(faces(E) != 0 && faces(E)->isUncovered()){
+		out.push_back(faces(E));
+	}
+	if(faces(S) != 0 && faces(S)->isUncovered()){
+		out.push_back(faces(S));
+	}
+	if(faces(W) != 0 && faces(W)->isUncovered()){
+		out.push_back(faces(W));
+	}
+	if(faces(B) != 0 && faces(B)->isUncovered()){
+		out.push_back(faces(B));
+	}
+	return out;
 }
 
 Face * Cell::operator() (Direction d){
@@ -263,6 +307,7 @@ Face * Cell::createBoundary(){
 		fB->setA(vA);
 		fB->setB(vB);
 		fB->setType(IRREGULAR);
+		fB->setFrom(this);
 		faces(B) = fB;
 		//cout << "Created boundary face connecting " << vA->getCoord() << " and " << vB->getCoord() << endl;
 	}

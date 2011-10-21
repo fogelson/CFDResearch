@@ -25,7 +25,22 @@ Face::Face(){
 	vertexB = 0;
 	upToDate = false;
 	area = 0;
+	fromCell = 0;
+	toCell = 0;
 	setType(COVERED);
+}
+
+void Face::setFrom(Cell * fromCell){
+	this->fromCell = fromCell;
+}
+void Face::setTo(Cell * toCell){
+	this->toCell = toCell;
+}
+Cell * Face::getFrom(){
+	return fromCell;
+}
+Cell * Face::getTo(){
+	return toCell;
 }
 
 Vertex * Face::getA(){

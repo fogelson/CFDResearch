@@ -17,6 +17,8 @@ namespace OOOps{
 
 Divergence::Divergence(Grid * g){
 	this->g = g;
+	constantTerm.resize(g->xRange,g->yRange);
+	constantTerm = 0;
 	for(int i = g->iMin; i <= g->iMax; i++){
 		for(int j = g->jMin; j <= g->jMax; j++){
 			/*if(false && g->isRegular(i,j)){
@@ -75,11 +77,11 @@ Divergence::Divergence(Grid * g){
 						coefficients[ind] = -(1/V)*faces(W)->getArea();
 					}
 				}
-				/*if(g->isFaceUncovered(i,j,B)){
+				if(g->isFaceUncovered(i,j,B)){
 					int faceIndex = faces(B)->getIndex();
 					CellToFaceIndex ind(i,j,faceIndex);
 					coefficients[ind] = faces(B)->getArea()/V;
-				}*/
+				}
 			}
 		}
 	}

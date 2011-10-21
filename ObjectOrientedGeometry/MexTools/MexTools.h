@@ -11,8 +11,10 @@
 #include <string>
 #include "BlitzMatlab.h"
 #include "../Geo/Geometry.h"
-#include "/Applications/MATLAB_R2010a.app/extern/include/mex.h"
-#include "/Applications/MATLAB_R2010a.app/extern/include/matrix.h"
+//#include "/Applications/MATLAB_R2010a.app/extern/include/mex.h"
+//#include "/Applications/MATLAB_R2010a.app/extern/include/matrix.h"
+#include "mex.h"
+#include "matrix.h"
 
 namespace CFD{
 using namespace OOGeometry;

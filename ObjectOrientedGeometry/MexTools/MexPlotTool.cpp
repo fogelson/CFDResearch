@@ -91,14 +91,16 @@ void MexPlotTool::plotFaceDoubleArrayXLine(FaceDoubleArray & u, Grid * g, int i,
 }
 
 void MexPlotTool::graphFaceDoubleArray(FaceDoubleArray & u, Grid * g){
-	FaceDoubleArray x = g->makeFaceDoubleArray();
-	FaceDoubleArray y = g->makeFaceDoubleArray();
+	FaceDoubleArray x = g->getFaceX();
+	FaceDoubleArray y = g->getFaceY();
 	FaceDoubleArray nX = g->makeFaceDoubleArray();
 	FaceDoubleArray nY = g->makeFaceDoubleArray();
+	FaceDoubleArray uPlot = g->makeFaceDoubleArray();
+	uPlot = mxGetNaN();
 	for(int k = 0; k < g->faces.size(); k++){
-		if(g->faces[k] != 0 && true){// g->faces[k]->isUncovered()){
-			x(k) = g->faces[k]->getCentroid()(0);
-			y(k) = g->faces[k]->getCentroid()(1);
+		if(g->faces[k] != 0 && g->faces[k]->isUncovered()){
+			//x(k) = g->faces[k]->getCentroid()(0);
+			//y(k) = g->faces[k]->getCentroid()(1);
 			/*Coord A, B;
 			A = g->faces[k]->getA()->getCoord();
 			B = g->faces[k]->getB()->getCoord();
@@ -113,8 +115,19 @@ void MexPlotTool::graphFaceDoubleArray(FaceDoubleArray & u, Grid * g){
 			TinyVector<double,2> normal = g->faces[k]->getNormal();
 			nX(k) = normal(0)*u(k);
 			nY(k) = normal(1)*u(k);
+			uPlot(k) = u(k);
 		}
 	}
+	/*int nlhs = 0;
+	int nrhs = 4;
+	mxArray * plhs[nlhs];
+	mxArray * prhs[nrhs];
+	prhs[0] = setMxVector(x);
+	prhs[1] = setMxVector(y);
+	prhs[2] = setMxInt(20);
+	prhs[3] = setMxVector(uPlot);
+	mexCallMATLAB(nlhs,plhs,nrhs,prhs,"scatter");*/
+
 	int nlhs = 0;
 	int nrhs = 4;
 	mxArray * plhs[nlhs];
@@ -130,6 +143,7 @@ void MexPlotTool::graphCellDoubleArray(CellDoubleArray & u, Grid * g, string gra
 	CellDoubleArray x = g->makeCellDoubleArray();
 	CellDoubleArray y = g->makeCellDoubleArray();
 	CellDoubleArray uPlot = g->makeCellDoubleArray();
+	uPlot = u;
 	double h = g->getH();
 	for(int i = g->iMin; i <= g->iMax; i++){
 		for(int j = g->jMin; j <= g->jMax; j++){

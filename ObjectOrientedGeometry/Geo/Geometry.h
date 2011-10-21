@@ -65,6 +65,7 @@ public:
 };
 
 class Cell : public GridElement{
+	int i, j;
 public:
 	bool upToDate;
 
@@ -89,6 +90,11 @@ public:
 	int getNumberOfVertices();
 	int getNumberOfFaces();
 
+	void setI(int i);
+	void setJ(int j);
+	int getI();
+	int getJ();
+
 	vector<Vertex*> getVertices();
 	vector<Face*> getFaces();
 
@@ -109,6 +115,7 @@ public:
 class Face : public GridElement{
 public:
 	Grid * g;
+	Cell * fromCell, * toCell;
 	Vertex * vertexA, * vertexB;
 	Cell * cell1, *cell2;
 	Coord centroid;
@@ -123,6 +130,11 @@ public:
 	Vertex * getVertexB();
 	Vertex * getA();
 	Vertex * getB();
+
+	void setFrom(Cell * fromCell);
+	void setTo(Cell * toCell);
+	Cell * getFrom();
+	Cell * getTo();
 
 	void setVertexA(Vertex * vertexA);
 	void setVertexB(Vertex * vertexB);
@@ -202,6 +214,9 @@ public:
 	Array<Type,1> getVertexTypes();
 	CellDoubleArray getCellX();
 	CellDoubleArray getCellY();
+	CellDoubleArray getCellCentroidX();
+	CellDoubleArray getCellCentroidY();
+	CellDoubleArray getVolumes();
 	FaceDoubleArray getFaceX();
 	FaceDoubleArray getFaceY();
 	VertexDoubleArray getVertexX();

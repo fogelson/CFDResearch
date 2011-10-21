@@ -15,25 +15,25 @@ namespace CFD{
 using namespace OOGeometry;
 namespace OOOps{
 
-CellToCellIndex::CellToCellIndex(int i1, int j1, int i2, int j2){
-	this->i1 = i1;
-	this->j1 = j1;
-	this->i2 = i2;
-	this->j2 = j2;
+CellToCellIndex::CellToCellIndex(int iFrom, int jFrom, int iTo, int jTo){
+	this->iFrom = iFrom;
+	this->jFrom = jFrom;
+	this->iTo = iTo;
+	this->jTo = jTo;
 }
 
 bool CellToCellIndexCompare::operator() (const CellToCellIndex & lhs, const CellToCellIndex & rhs) const{
-	if(lhs.i1 != rhs.i1){
-		return lhs.i1 < rhs.i1;
+	if(lhs.iFrom != rhs.iFrom){
+		return lhs.iFrom < rhs.iFrom;
 	}
-	else if(lhs.j1 != rhs.j1){
-		return lhs.j1 < rhs.j1;
+	else if(lhs.jFrom != rhs.jFrom){
+		return lhs.jFrom < rhs.jFrom;
 	}
-	if(lhs.i2 != rhs.i2){
-		return lhs.i2 < rhs.i2;
+	else if(lhs.iTo != rhs.iTo){
+		return lhs.iTo < rhs.iTo;
 	}
-	else if(lhs.j2 != rhs.j2){
-		return lhs.j2 < rhs.j2;
+	else{
+		return lhs.jTo < rhs.jTo;
 	}
 }
 }

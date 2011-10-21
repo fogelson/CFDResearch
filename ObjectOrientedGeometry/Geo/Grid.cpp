@@ -62,11 +62,11 @@ void Grid::tile(double xMin, double yMin, double xMax, double yMax){
 	double yWidth = yMax - yMin;
 	int xCells = ceil(xWidth/h);
 	int yCells = ceil(yWidth/h);
-	xCells = xCells + (xCells % 2);
-	yCells = yCells + (yCells % 2);
+	xCells = xCells + (xCells % 2) + 1;
+	yCells = yCells + (yCells % 2) + 1;
 
-	iMin = 1;
-	jMin = 1;
+	iMin = 0;//1;
+	jMin = 0;//1;
 	iMax = xCells;
 	jMax = yCells;
 
@@ -89,6 +89,10 @@ void Grid::tile(double xMin, double yMin, double xMax, double yMax){
 	for(int i = iMin; i <= iMax; i++){
 		for(int j = jMin; j <= jMax; j++){
 			Cell * current = cells(i,j);
+			Cell * northCell = j+1 <= jMax ? cells(i,j+1) : 0;
+			Cell * southCell = j-1 >= jMin ? cells(i,j-1) : 0;
+			Cell * eastCell  = i+1 <= iMax ? cells(i+1,j) : 0;
+			Cell * westCell  = i-1 >= iMin ? cells(i-1,j) : 0;
 			if(!current->hasFace(N)){
 				Face * newFace = createFace();
 				current->setFace(newFace,N);
@@ -96,8 +100,10 @@ void Grid::tile(double xMin, double yMin, double xMax, double yMax){
 				normal(0) = 0;
 				normal(1) = 1;
 				newFace->setNormal(normal);
-				if(j+1 <= jMax){
-					cells(i,j+1)->setFace(newFace,S);
+				newFace->setFrom(cells(i,j));
+				if(northCell != 0){
+					northCell->setFace(newFace,S);
+					newFace->setTo(northCell);
 				}
 			}
 			if(!current->hasFace(S)){
@@ -107,8 +113,10 @@ void Grid::tile(double xMin, double yMin, double xMax, double yMax){
 				normal(0) = 0;
 				normal(1) = 1;
 				newFace->setNormal(normal);
-				if(j-1 >= jMin){
-					cells(i,j-1)->setFace(newFace,N);
+				newFace->setTo(current);
+				if(southCell != 0){
+					southCell->setFace(newFace,N);
+					newFace->setFrom(southCell);
 				}
 			}
 			if(!current->hasFace(E)){
@@ -118,8 +126,10 @@ void Grid::tile(double xMin, double yMin, double xMax, double yMax){
 				normal(0) = 1;
 				normal(1) = 0;
 				newFace->setNormal(normal);
-				if(i+1 <= iMax){
-					cells(i+1,j)->setFace(newFace,W);
+				newFace->setFrom(current);
+				if(eastCell != 0){
+					eastCell->setFace(newFace,W);
+					newFace->setTo(eastCell);
 				}
 			}
 			if(!current->hasFace(W)){
@@ -129,8 +139,10 @@ void Grid::tile(double xMin, double yMin, double xMax, double yMax){
 				normal(0) = 1;
 				normal(1) = 0;
 				newFace->setNormal(normal);
-				if(i-1 >= iMin){
-					cells(i-1,j)->setFace(newFace,E);
+				newFace->setTo(current);
+				if(westCell != 0){
+					westCell->setFace(newFace,E);
+					newFace->setFrom(westCell);
 				}
 			}
 		}
@@ -252,6 +264,8 @@ void Grid::setH(double h){
 Cell * Grid::createCell(int i, int j){
 	Cell * out = new Cell();
 	cells(i,j) = out;
+	out->setI(i);
+	out->setJ(j);
 	return out;
 }
 
@@ -431,6 +445,34 @@ CellDoubleArray Grid::getCellY(){
 	return out;
 
 }
+CellDoubleArray Grid::getCellCentroidX(){
+	CellDoubleArray out = makeCellDoubleArray();
+	for(int i = iMin; i <= iMax; i++){
+		for(int j = jMin; j <= jMax; j++){
+			out(i,j) = cells(i,j)->getCentroid()(0);
+		}
+	}
+	return out;
+}
+CellDoubleArray Grid::getCellCentroidY(){
+	CellDoubleArray out = makeCellDoubleArray();
+	for(int i = iMin; i <= iMax; i++){
+		for(int j = jMin; j <= jMax; j++){
+			out(i,j) = cells(i,j)->getCentroid()(1);
+		}
+	}
+	return out;
+}
+CellDoubleArray Grid::getVolumes(){
+	CellDoubleArray out = makeCellDoubleArray();
+	for(int i = iMin; i <= iMax; i++){
+		for(int j = jMin; j <= jMax; j++){
+			out(i,j) = cells(i,j)->getVolume();
+		}
+	}
+	return out;
+}
+
 FaceDoubleArray Grid::getFaceX(){
 	FaceDoubleArray out = makeFaceDoubleArray();
 	for(int k = 0; k < faces.size(); k++){
