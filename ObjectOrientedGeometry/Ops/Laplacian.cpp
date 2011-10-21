@@ -15,24 +15,14 @@ namespace CFD{
 using namespace OOGeometry;
 namespace OOOps{
 
-Laplacian::Laplacian(Grid * g){
-	this->g = g;
-	Gradient grad(g);
+/*Laplacian::Laplacian(Grid * g){
 	Divergence div(g);
-	constantTerm.resize(g->xRange,g->yRange);
-	constantTerm = 0;
-	CellDoubleArray divGradConstant = g->makeCellDoubleArray();
-	divGradConstant = div(grad.constantTerm);
-	constantTerm = divGradConstant + div.constantTerm;
-
-	for(int i = g->iMin; i <= g->iMax; i++){
-		for(int j = g->jMin; j <= g->jMax; j++){
-			for(int k = 0; k < g->faces.size(); k++){
-				CellToFaceIndex c2f(i,j,k);
-			}
-		}
-	}
-}
+	Gradient grad(g);
+	CellToCellOperator L = div(grad);
+	this->g = L.g;
+	this->coefficients = L.coefficients;
+	this->constantTerm = L.constantTerm;
+}*/
 
 /*void Laplacian::applyIrregularGradient(double & c1, double & c2, double & c3, double & c4, double a, double v){
 	double h = g->getH();

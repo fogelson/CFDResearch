@@ -1,5 +1,5 @@
 /*
- * Operators.cpp
+ * FaceToCellOperator.cpp
  *
  *  Created on: Oct 12, 2011
  *      Author: fogelson
@@ -14,43 +14,26 @@ namespace CFD{
 using namespace OOGeometry;
 namespace OOOps{
 
-CellToCellOperator & CellToCellOperator::operator= (const CellToCellOperator & rhs){
-	g = rhs.g;
-	coefficients = rhs.coefficients;
-	constantTerm.resize(g->xRange,g->yRange);
-	constantTerm = rhs.constantTerm;
-	return *this;
-}
-
-CellDoubleArray CellToCellOperator::apply(CellDoubleArray & u){
-	CellDoubleArray out = g->makeCellDoubleArray();
-
-	CellToCellCoefficients::iterator cIt;
-	for(cIt = coefficients.begin(); cIt != coefficients.end(); cIt++){
-		CellToCellIndex c2c = (*cIt).first;
-		double c = (*cIt).second;
-		out(c2c.iTo,c2c.jTo) += c*u(c2c.iFrom,c2c.jFrom);
-	}
-	for(int i = g->iMin; i <= g->iMax; i++){
-		for(int j = g->jMin; j <= g->jMax; j++){
-			out(i,j) += constantTerm(i,j);
-		}
-	}
-	return out;
-}
-
-CellDoubleArray CellToCellOperator::operator() (CellDoubleArray & u){
-	return apply(u);
-}
-
 CellDoubleArray FaceToCellOperator::apply(FaceDoubleArray & u){
 	CellDoubleArray out = g->makeCellDoubleArray();
 
-	CellToFaceCoefficients::iterator cIt;
+	/*CellToFaceCoefficients::iterator cIt;
 	for(cIt = coefficients.begin(); cIt != coefficients.end(); cIt++){
 		CellToFaceIndex c2f = (*cIt).first;
 		out(c2f.i,c2f.j) += ((*cIt).second)*u(c2f.faceIndex);
+	}*/
+
+	FaceToCellCoefficients::iterator fIt;
+	for(fIt = coefficients.begin(); fIt != coefficients.end(); fIt++){
+		int faceIndex = (*fIt).first;
+		CellCoefficients::iterator cIt;
+		for(cIt = (*fIt).second.begin(); cIt != (*fIt).second.end(); cIt++){
+			int i = (*cIt).first.i, j = (*cIt).first.j;
+			double c = (*cIt).second;
+			out(i,j) += c*u(faceIndex);
+		}
 	}
+
 	for(int i = g->iMin; i <= g->iMax; i++){
 		for(int j = g->jMin; j <= g->jMax; j++){
 			out(i,j) += constantTerm(i,j);
@@ -59,11 +42,36 @@ CellDoubleArray FaceToCellOperator::apply(FaceDoubleArray & u){
 	return out;
 }
 
-/*CellDoubleArray FaceToCellOperator::operator() (FaceDoubleArray & u){
-	return apply(u);
-}*/
 CellDoubleArray FaceToCellOperator::operator() (FaceDoubleArray u){
 	return apply(u);
+}
+
+/* Returns a cell to cell operator of *this composed with B
+ *
+ */
+CellToCellOperator FaceToCellOperator::operator() (CellToFaceOperator & B){
+	CellToCellOperator C;
+	C.g = g;
+	C.constantTerm.resize(g->xRange,g->yRange);
+	C.constantTerm = constantTerm + apply(B.constantTerm);
+	CellToFaceCoefficients::iterator fromIt;
+	for(fromIt = B.coefficients.begin(); fromIt != B.coefficients.end(); fromIt++){
+		int iFrom = (*fromIt).first.i, jFrom = (*fromIt).first.j;
+		CellIndex cellFrom(iFrom,jFrom);
+		FaceCoefficients::iterator faceIt;
+		for(faceIt = (*fromIt).second.begin(); faceIt != (*fromIt).second.end(); faceIt++){
+			int faceIndex = (*faceIt).first;
+			double cFrom = (*faceIt).second;
+			CellCoefficients::iterator toIt;
+			for(toIt = coefficients[faceIndex].begin(); toIt != coefficients[faceIndex].end(); toIt++){
+				int iTo = (*toIt).first.i, jTo = (*toIt).first.j;
+				double cTo = (*toIt).second;
+				CellIndex cellTo(iTo,jTo);
+				C.coefficients[cellFrom][cellTo] += cFrom*cTo;
+			}
+		}
+	}
+	return C;
 }
 
 /*
@@ -99,7 +107,7 @@ CellDoubleArray FaceToCellOperator::operator() (FaceDoubleArray u){
 	return C;
 }*/
 
-int FaceToCellOperator::getRows(){
+/*int FaceToCellOperator::getRows(){
 	return g->cells.size();
 }
 
@@ -140,7 +148,7 @@ Array<double,1> FaceToCellOperator::getVector(){
 	}
 
 	return b;
-}
+}*/
 
 }
 }

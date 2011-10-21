@@ -63,7 +63,11 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]){
 	Gradient grad(g);
 	Divergence div(g);
 
-	CellDoubleArray Lu = div(grad(u));
+	CellToCellOperator L;
+	L = div(grad);
+
+	CellDoubleArray Lu = L(u);
+	//div(grad(u));
 	//Lu = where(g->getCellTypes() == REGULAR, Lu, 0);
 
 	CellDoubleArray x = g->getCellCentroidX();

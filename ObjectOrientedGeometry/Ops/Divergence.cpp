@@ -38,49 +38,49 @@ Divergence::Divergence(Grid * g){
 				TinyVector<Face*,5> faces = g->cells(i,j)->faces;
 				double V = g->cells(i,j)->getVolume();
 				if(g->isFaceUncovered(i,j,N)){
-					int faceIndex = faces(N)->getIndex();
-					CellToFaceIndex ind(i,j,faceIndex);
+					FaceIndex faceIndex = faces(N)->getIndex();
+					CellIndex cellIndex(i,j);
 					if(g->isFaceRegular(i,j,N)){
-						coefficients[ind] = (1/V)*h;
+						coefficients[faceIndex][cellIndex] = (1/V)*h;
 					}
 					else{
-						coefficients[ind] = (1/V)*faces(N)->getArea();
+						coefficients[faceIndex][cellIndex] = (1/V)*faces(N)->getArea();
 					}
 				}
 				if(g->isFaceUncovered(i,j,S)){
-					int faceIndex = faces(S)->getIndex();
-					CellToFaceIndex ind(i,j,faceIndex);
+					FaceIndex faceIndex = faces(S)->getIndex();
+					CellIndex cellIndex(i,j);
 					if(g->isFaceRegular(i,j,S)){
-						coefficients[ind] = -(1/V)*h;
+						coefficients[faceIndex][cellIndex] = -(1/V)*h;
 					}
 					else{
-						coefficients[ind] = -(1/V)*faces(S)->getArea();
+						coefficients[faceIndex][cellIndex] = -(1/V)*faces(S)->getArea();
 					}
 				}
 				if(g->isFaceUncovered(i,j,E)){
-					int faceIndex = faces(E)->getIndex();
-					CellToFaceIndex ind(i,j,faceIndex);
+					FaceIndex faceIndex = faces(E)->getIndex();
+					CellIndex cellIndex(i,j);
 					if(g->isFaceRegular(i,j,E)){
-						coefficients[ind] = (1/V)*h;
+						coefficients[faceIndex][cellIndex] = (1/V)*h;
 					}
 					else{
-						coefficients[ind] = (1/V)*faces(E)->getArea();
+						coefficients[faceIndex][cellIndex] = (1/V)*faces(E)->getArea();
 					}
 				}
 				if(g->isFaceUncovered(i,j,W)){
-					int faceIndex = faces(W)->getIndex();
-					CellToFaceIndex ind(i,j,faceIndex);
+					FaceIndex faceIndex = faces(W)->getIndex();
+					CellIndex cellIndex(i,j);
 					if(g->isFaceRegular(i,j,W)){
-						coefficients[ind] = -(1/V)*h;
+						coefficients[faceIndex][cellIndex] = -(1/V)*h;
 					}
 					else{
-						coefficients[ind] = -(1/V)*faces(W)->getArea();
+						coefficients[faceIndex][cellIndex] = -(1/V)*faces(W)->getArea();
 					}
 				}
 				if(g->isFaceUncovered(i,j,B)){
-					int faceIndex = faces(B)->getIndex();
-					CellToFaceIndex ind(i,j,faceIndex);
-					coefficients[ind] = faces(B)->getArea()/V;
+					FaceIndex faceIndex = faces(B)->getIndex();
+					CellIndex cellIndex(i,j);
+					coefficients[faceIndex][cellIndex] = faces(B)->getArea()/V;
 				}
 			}
 		}
