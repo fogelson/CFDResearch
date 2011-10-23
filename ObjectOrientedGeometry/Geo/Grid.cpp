@@ -62,11 +62,11 @@ void Grid::tile(double xMin, double yMin, double xMax, double yMax){
 	double yWidth = yMax - yMin;
 	int xCells = ceil(xWidth/h);
 	int yCells = ceil(yWidth/h);
-	xCells = xCells + (xCells % 2) + 1;
-	yCells = yCells + (yCells % 2) + 1;
+	xCells = xCells + (xCells % 2);
+	yCells = yCells + (yCells % 2);
 
-	iMin = 0;//1;
-	jMin = 0;//1;
+	iMin = 1;
+	jMin = 1;
 	iMax = xCells;
 	jMax = yCells;
 

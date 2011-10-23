@@ -19,14 +19,24 @@ namespace OOMultigrid{
 void GSLex::smooth(CellDoubleArray & u, CellDoubleArray u0, CellDoubleArray f, CellToCellOperator & C, int its){
 	Grid * g = C.g;
 	u = u0;
-	CellDoubleArray rhs = g->makeCellDoubleArray();
-	CellToCellCoefficients::iterator it;
-	for(it = C.coefficients.begin(); it != C.coefficients.end(); it++){
-		int i = (*it).first.i, j = (*it.first.j);
-		CellCoefficients::iterator it2;
-		for(it2 = (*it).second.begin(); it2 != (*it).second.end(); it2++){
-			if((*it).first != (*it2).first){
-				// put in the right place in rhs array
+
+	for(int n = 0; n < its; n++){
+		for(int i = g->iMin; i <= g->iMax; i++){
+			for(int j = g->jMin; j <= g->jMax; j++){
+				double rhs = f(i,j) - C.constantTerm(i,j);
+				CellCoefficients::iterator cIt;
+				CellIndex current(i,j);
+				double currentCoefficient = 0;
+				for(cIt = C.coefficients[current].begin(); cIt != C.coefficients[current].end(); cIt++){
+					if((*cIt).first != current){
+						int iRhs = (*cIt).first.i, jRhs = (*cIt).first.j;
+						rhs -= (*cIt).second*u(iRhs,jRhs);
+					}
+					else{
+						currentCoefficient = (*cIt).second;
+					}
+				}
+				u(i,j) = rhs/currentCoefficient;
 			}
 		}
 	}

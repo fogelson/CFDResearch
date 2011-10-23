@@ -41,46 +41,46 @@ Divergence::Divergence(Grid * g){
 					FaceIndex faceIndex = faces(N)->getIndex();
 					CellIndex cellIndex(i,j);
 					if(g->isFaceRegular(i,j,N)){
-						coefficients[faceIndex][cellIndex] = (1/V)*h;
+						coefficients[cellIndex][faceIndex] = (1/V)*h;
 					}
 					else{
-						coefficients[faceIndex][cellIndex] = (1/V)*faces(N)->getArea();
+						coefficients[cellIndex][faceIndex] = (1/V)*faces(N)->getArea();
 					}
 				}
 				if(g->isFaceUncovered(i,j,S)){
 					FaceIndex faceIndex = faces(S)->getIndex();
 					CellIndex cellIndex(i,j);
 					if(g->isFaceRegular(i,j,S)){
-						coefficients[faceIndex][cellIndex] = -(1/V)*h;
+						coefficients[cellIndex][faceIndex] = -(1/V)*h;
 					}
 					else{
-						coefficients[faceIndex][cellIndex] = -(1/V)*faces(S)->getArea();
+						coefficients[cellIndex][faceIndex] = -(1/V)*faces(S)->getArea();
 					}
 				}
 				if(g->isFaceUncovered(i,j,E)){
 					FaceIndex faceIndex = faces(E)->getIndex();
 					CellIndex cellIndex(i,j);
 					if(g->isFaceRegular(i,j,E)){
-						coefficients[faceIndex][cellIndex] = (1/V)*h;
+						coefficients[cellIndex][faceIndex] = (1/V)*h;
 					}
 					else{
-						coefficients[faceIndex][cellIndex] = (1/V)*faces(E)->getArea();
+						coefficients[cellIndex][faceIndex] = (1/V)*faces(E)->getArea();
 					}
 				}
 				if(g->isFaceUncovered(i,j,W)){
 					FaceIndex faceIndex = faces(W)->getIndex();
 					CellIndex cellIndex(i,j);
 					if(g->isFaceRegular(i,j,W)){
-						coefficients[faceIndex][cellIndex] = -(1/V)*h;
+						coefficients[cellIndex][faceIndex] = -(1/V)*h;
 					}
 					else{
-						coefficients[faceIndex][cellIndex] = -(1/V)*faces(W)->getArea();
+						coefficients[cellIndex][faceIndex] = -(1/V)*faces(W)->getArea();
 					}
 				}
 				if(g->isFaceUncovered(i,j,B)){
 					FaceIndex faceIndex = faces(B)->getIndex();
 					CellIndex cellIndex(i,j);
-					coefficients[faceIndex][cellIndex] = faces(B)->getArea()/V;
+					coefficients[cellIndex][faceIndex] = faces(B)->getArea()/V;
 				}
 			}
 		}

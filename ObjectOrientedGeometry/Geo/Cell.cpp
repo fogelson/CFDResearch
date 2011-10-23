@@ -14,7 +14,13 @@ namespace CFD{
 namespace OOGeometry{
 
 Cell::Cell(){
+	overrideVolume = false;
 	faces = 0;
+}
+
+void Cell::setVolume(double volume){
+	overrideVolume = true;
+	this->volume = volume;
 }
 
 void Cell::update(){
@@ -138,7 +144,9 @@ void Cell::update(){
 		signedVolume += c(0)*cP(1) - cP(0)*c(1);
 	}
 	signedVolume /= 2;
-	volume = abs(signedVolume);
+	if(!overrideVolume){
+		volume = abs(signedVolume);
+	}
 
 	centroid = 0;
 	for(int k = 0; k < vertices.size(); k++){

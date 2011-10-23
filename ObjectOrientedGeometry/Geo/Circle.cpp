@@ -312,5 +312,26 @@ double Circle::getOffset(){
 	return offset;
 }
 
+Grid * Circle::getCoarse(){
+	if(hasCoarse){
+		return coarseGrid;
+	}
+	double hC = 2*h;
+	coarseGrid = new Circle(hC, r, offset);
+
+	/*for(int iC = coarseGrid->iMin; iC <= coarseGrid->iMax; iC++){
+		for(int jC = coarseGrid->jMin; jC <= coarseGrid->jMax; jC++){
+			double v = 0;
+			v += isUncovered(2*iC,2*jC) ? cells(2*iC,2*jC)->getVolume() : 0;
+			v += isUncovered(2*iC-1,2*jC) ? cells(2*iC-1,2*jC)->getVolume() : 0;
+			v += isUncovered(2*iC,2*jC-1) ? cells(2*iC,2*jC-1)->getVolume() : 0;
+			v += isUncovered(2*iC-1,2*jC-1) ? cells(2*iC-1,2*jC-1)->getVolume() : 0;
+			coarseGrid->cells(iC,jC)->setVolume(v);
+		}
+	}*/
+	hasCoarse = true;
+	return coarseGrid;
+}
+
 }
 }

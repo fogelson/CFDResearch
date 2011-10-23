@@ -27,6 +27,10 @@ void MexPlotTool::newFigure(){
 	mexEvalString("figure");
 }
 
+void MexPlotTool::drawNow(){
+	mexEvalString("drawnow");
+}
+
 void MexPlotTool::drawGrid(Grid * g){
 	vector<Face*>::iterator it;
 	for(it = g->faces.begin(); it != g->faces.end(); it++){

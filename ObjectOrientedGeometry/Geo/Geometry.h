@@ -66,6 +66,7 @@ public:
 
 class Cell : public GridElement{
 	int i, j;
+	bool overrideVolume;
 public:
 	bool upToDate;
 
@@ -86,6 +87,7 @@ public:
 public:
 	Cell();
 	double getVolume();
+	void setVolume(double volume);
 	double getVolumeFraction();
 	int getNumberOfVertices();
 	int getNumberOfFaces();
@@ -221,6 +223,8 @@ public:
 	FaceDoubleArray getFaceY();
 	VertexDoubleArray getVertexX();
 	VertexDoubleArray getVertexY();
+
+	virtual Grid * getCoarse() = 0;
 };
 
 class Circle : public Grid{
@@ -237,6 +241,7 @@ public:
 	double getR();
 	void setOffset(double offset);
 	double getOffset();
+	Grid * getCoarse();
 };
 
 class GridArray{

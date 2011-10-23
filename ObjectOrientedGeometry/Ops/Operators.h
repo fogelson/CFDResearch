@@ -28,17 +28,19 @@ class FaceToFaceOperator;
 class CellToCellOperator;
 
 struct CellIndex;
-struct CellIndexCompare;
 
 typedef int FaceIndex;
 
-typedef map<CellIndex, double, CellIndexCompare> CellCoefficients;
+typedef map<CellIndex, double> CellCoefficients;
 typedef map<FaceIndex, double> FaceCoefficients;
 
-typedef map<CellIndex, FaceCoefficients, CellIndexCompare> CellToFaceCoefficients;
-typedef map<CellIndex, CellCoefficients, CellIndexCompare> CellToCellCoefficients;
-typedef map<FaceIndex, CellCoefficients > FaceToCellCoefficients;
-typedef map<FaceIndex, FaceCoefficients > FaceToFaceCoefficients;
+/*
+ * First index is the range ("to"), second index is the domain ("from").
+ */
+typedef map<FaceIndex, CellCoefficients> CellToFaceCoefficients;
+typedef map<CellIndex, CellCoefficients> CellToCellCoefficients;
+typedef map<CellIndex, FaceCoefficients> FaceToCellCoefficients;
+typedef map<FaceIndex, FaceCoefficients> FaceToFaceCoefficients;
 
 class Gradient;
 class ConstantAdvectiveFlux;
@@ -48,9 +50,12 @@ class Divergence;
 struct CellIndex{
 	int i, j;
 	CellIndex(int i, int j);
-};
-struct CellIndexCompare{
-	bool operator() (const CellIndex & lhs, const CellIndex & rhs) const;
+	bool operator== (const CellIndex & rhs) const;
+	bool operator!= (const CellIndex & rhs) const;
+	bool operator< (const CellIndex & rhs) const;
+	bool operator> (const CellIndex & rhs) const;
+	bool operator<= (const CellIndex & rhs) const;
+	bool operator>= (const CellIndex & rhs) const;
 };
 
 class CellToFaceOperator{
@@ -62,7 +67,13 @@ public:
 	FaceDoubleArray apply(CellDoubleArray & u);
 	//FaceDoubleArray operator() (CellDoubleArray & u);
 	FaceDoubleArray operator() (CellDoubleArray u);
+	CellToFaceOperator & operator= (const CellToFaceOperator & rhs);
+	CellToFaceOperator operator+ (CellToFaceOperator & B);
+	CellToFaceOperator operator- (CellToFaceOperator & B);
+
 };
+CellToFaceOperator operator* (FaceDoubleArray & a, CellToFaceOperator & B);
+CellToFaceOperator operator* (double a, CellToFaceOperator & B);
 
 class ConstantAdvectiveFlux : public CellToFaceOperator{
 	double aX, aY;
@@ -100,10 +111,16 @@ public:
 	CellToCellCoefficients coefficients;
 	CellDoubleArray constantTerm;
 public:
+	static CellToCellOperator getIdentity(Grid * g);
 	CellToCellOperator & operator= (const CellToCellOperator & rhs);
+	CellToCellOperator operator+ (CellToCellOperator & B);
+	CellToCellOperator operator- (CellToCellOperator & B);
 	CellDoubleArray apply(CellDoubleArray & u);
 	CellDoubleArray operator() (CellDoubleArray & u);
 };
+
+CellToCellOperator operator* (CellDoubleArray & a, CellToCellOperator & B);
+CellToCellOperator operator* (double a, CellToCellOperator & B);
 
 /*class Laplacian : public CellToCellOperator{
 public:

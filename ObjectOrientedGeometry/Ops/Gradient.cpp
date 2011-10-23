@@ -22,10 +22,10 @@ void Gradient::interpolateIrregularFace(double alpha, CellIndex ind1, CellIndex 
 	c2 =  (1 + alpha/h)/(2*h);
 	c3 = -(1 - alpha/h)/(2*h);
 	c4 =  (1 - alpha/h)/(2*h);
-	coefficients[ind1][faceIndex] += c1;
-	coefficients[ind2][faceIndex] += c2;
-	coefficients[ind3][faceIndex] += c3;
-	coefficients[ind4][faceIndex] += c4;
+	coefficients[faceIndex][ind1] += c1;
+	coefficients[faceIndex][ind2] += c2;
+	coefficients[faceIndex][ind3] += c3;
+	coefficients[faceIndex][ind4] += c4;
 }
 //void Gradient::interpolateIrregularFace(double alpha, CellToFaceIndex ind1, CellToFaceIndex ind2, CellToFaceIndex ind3, CellToFaceIndex ind4){
 //	/*double c1, c2;
@@ -82,10 +82,10 @@ Gradient::Gradient(Grid * g){
 				if(faces(N) != 0){
 					FaceIndex faceIndex = faces(N)->getIndex();
 					if(faces(N)->isRegular()){
-						coefficients[cellIndex][faceIndex] = -1/h;
+						coefficients[faceIndex][cellIndex] = -1/h;
 					}
 					else if(faces(N)->isIrregular()){
-						if(coefficients[cellIndex].count(faceIndex) == 0){
+						if(coefficients[faceIndex].count(cellIndex) == 0){
 							double alpha = g->cells(i,j)->getFace(N)->getArea();
 							if(g->isFaceUncovered(i+1,j,N)){
 								CellIndex ind1(i,j);
@@ -107,10 +107,10 @@ Gradient::Gradient(Grid * g){
 				if(faces(S) != 0){
 					FaceIndex faceIndex = faces(S)->getIndex();
 					if(faces(S)->isRegular()){
-						coefficients[cellIndex][faceIndex] = 1/h;
+						coefficients[faceIndex][cellIndex] = 1/h;
 					}
 					else if(faces(S)->isIrregular()){
-						if(coefficients[cellIndex].count(faceIndex) == 0){
+						if(coefficients[faceIndex].count(cellIndex) == 0){
 							double alpha = g->cells(i,j)->getFace(S)->getArea();
 							if(g->isFaceUncovered(i+1,j,S)){
 								CellIndex ind1(i,j-1);
@@ -133,10 +133,10 @@ Gradient::Gradient(Grid * g){
 					FaceIndex faceIndex = faces(E)->getIndex();
 					CellIndex cellIndex(i,j);
 					if(faces(E)->isRegular()){
-						coefficients[cellIndex][faceIndex] = -1/h;
+						coefficients[faceIndex][cellIndex] = -1/h;
 					}
 					else if(faces(E)->isIrregular()){
-						if(coefficients[cellIndex].count(faceIndex) == 0){
+						if(coefficients[faceIndex].count(cellIndex) == 0){
 							double alpha = g->cells(i,j)->getFace(E)->getArea();
 							if(g->isFaceUncovered(i,j+1,E)){
 								CellIndex ind1(i,j);
@@ -159,10 +159,10 @@ Gradient::Gradient(Grid * g){
 					FaceIndex faceIndex = faces(W)->getIndex();
 					CellIndex cellIndex(i,j);
 					if(faces(W)->isRegular()){
-						coefficients[cellIndex][faceIndex] = 1/h;
+						coefficients[faceIndex][cellIndex] = 1/h;
 					}
 					else if(faces(W)->isIrregular()){
-						if(coefficients[cellIndex].count(faceIndex) == 0){
+						if(coefficients[faceIndex].count(cellIndex) == 0){
 							double alpha = g->cells(i,j)->getFace(W)->getArea();
 							if(g->isFaceUncovered(i,j+1,W)){
 								CellIndex ind1(i+1,j);

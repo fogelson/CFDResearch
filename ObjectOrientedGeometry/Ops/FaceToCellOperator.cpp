@@ -23,13 +23,13 @@ CellDoubleArray FaceToCellOperator::apply(FaceDoubleArray & u){
 		out(c2f.i,c2f.j) += ((*cIt).second)*u(c2f.faceIndex);
 	}*/
 
-	FaceToCellCoefficients::iterator fIt;
-	for(fIt = coefficients.begin(); fIt != coefficients.end(); fIt++){
-		int faceIndex = (*fIt).first;
-		CellCoefficients::iterator cIt;
-		for(cIt = (*fIt).second.begin(); cIt != (*fIt).second.end(); cIt++){
-			int i = (*cIt).first.i, j = (*cIt).first.j;
-			double c = (*cIt).second;
+	FaceToCellCoefficients::iterator cIt;
+	for(cIt = coefficients.begin(); cIt != coefficients.end(); cIt++){
+		int i = (*cIt).first.i, j = (*cIt).first.j;
+		FaceCoefficients::iterator fIt;
+		for(fIt = (*cIt).second.begin(); fIt != (*cIt).second.end(); fIt++){
+			int faceIndex = (*fIt).first;
+			double c = (*fIt).second;
 			out(i,j) += c*u(faceIndex);
 		}
 	}
@@ -54,7 +54,26 @@ CellToCellOperator FaceToCellOperator::operator() (CellToFaceOperator & B){
 	C.g = g;
 	C.constantTerm.resize(g->xRange,g->yRange);
 	C.constantTerm = constantTerm + apply(B.constantTerm);
-	CellToFaceCoefficients::iterator fromIt;
+
+	FaceToCellCoefficients::iterator toIt;
+	for(toIt = coefficients.begin(); toIt != coefficients.end(); toIt++){
+		int iTo = (*toIt).first.i, jTo = (*toIt).first.j;
+		CellIndex cellTo(iTo,jTo);
+		FaceCoefficients::iterator faceIt;
+		for(faceIt = (*toIt).second.begin(); faceIt != (*toIt).second.end(); faceIt++){
+			FaceIndex faceIndex = (*faceIt).first;
+			double cTo = (*faceIt).second;
+			CellCoefficients::iterator fromIt;
+			for(fromIt = B.coefficients[faceIndex].begin(); fromIt != B.coefficients[faceIndex].end(); fromIt++){
+				int iFrom = (*fromIt).first.i, jFrom = (*fromIt).first.j;
+				double cFrom = (*fromIt).second;
+				CellIndex cellFrom(iFrom,jFrom);
+				C.coefficients[cellTo][cellFrom] += cTo*cFrom;
+			}
+		}
+	}
+
+	/*CellToFaceCoefficients::iterator fromIt;
 	for(fromIt = B.coefficients.begin(); fromIt != B.coefficients.end(); fromIt++){
 		int iFrom = (*fromIt).first.i, jFrom = (*fromIt).first.j;
 		CellIndex cellFrom(iFrom,jFrom);
@@ -70,7 +89,7 @@ CellToCellOperator FaceToCellOperator::operator() (CellToFaceOperator & B){
 				C.coefficients[cellFrom][cellTo] += cFrom*cTo;
 			}
 		}
-	}
+	}*/
 	return C;
 }
 
