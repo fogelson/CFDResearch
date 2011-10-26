@@ -14,6 +14,15 @@ namespace CFD{
 using namespace OOGeometry;
 namespace OOOps{
 
+CellToCellOperator::CellToCellOperator(){}
+
+CellToCellOperator::CellToCellOperator(const CellToCellOperator & copy){
+	g = copy.g;
+	coefficients = copy.coefficients;
+	constantTerm.resize(g->xRange,g->yRange);
+	constantTerm = copy.constantTerm;
+}
+
 CellToCellOperator & CellToCellOperator::operator= (const CellToCellOperator & rhs){
 	g = rhs.g;
 	coefficients = rhs.coefficients;

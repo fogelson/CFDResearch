@@ -145,7 +145,6 @@ void MexPlotTool::graphFaceDoubleArray(FaceDoubleArray & u, Grid * g){
 
 void MexPlotTool::graphCellCentroidData(CellDoubleArray & u, Grid * g){
 	int numUncovered = sum(where(g->getCellTypes() != COVERED, 1, 0));
-	cout << "There are " << numUncovered << " uncovered cells." << endl;
 	int nlhs = 0;
 	int nrhs = 3*numUncovered;
 	mxArray * plhs[nlhs];

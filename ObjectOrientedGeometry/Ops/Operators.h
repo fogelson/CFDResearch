@@ -49,8 +49,6 @@ class ConstantAdvectiveFlux;
 
 class Divergence;
 
-class LaplacianFactory;
-
 struct CellIndex{
 	int i, j;
 	CellIndex(int i, int j);
@@ -116,6 +114,8 @@ public:
 	CellDoubleArray constantTerm;
 public:
 	static CellToCellOperator getIdentity(Grid * g);
+	CellToCellOperator();
+	CellToCellOperator(const CellToCellOperator & copy);
 	CellToCellOperator & operator= (const CellToCellOperator & rhs);
 	CellToCellOperator operator+ (CellToCellOperator & B);
 	CellToCellOperator operator- (CellToCellOperator & B);
@@ -126,23 +126,6 @@ public:
 CellToCellOperator operator* (CellDoubleArray & a, CellToCellOperator & B);
 CellToCellOperator operator* (double a, CellToCellOperator & B);
 
-
-template <class T>
-class OperatorFactory{
-protected:
-	map<Grid*,T*> created;
-	//virtual void produce(Grid * g) = 0;
-public:
-	//~OperatorFactory();
-	//void clear();
-	//void remove(Grid * g);
-	//bool contains(Grid * g);
-	T & get(Grid * g);
-};
-
-/*class LaplacianFactory : public OperatorFactory<CellToCellOperator>{
-	void produce(Grid * g);
-};*/
 }
 }
 

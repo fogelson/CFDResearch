@@ -8,6 +8,7 @@
 #include "MexTools/MexTools.h"
 #include "Geo/Geometry.h"
 #include "Ops/Operators.h"
+#include "Ops/OperatorFactory.h"
 #include "Smoothers/Smoothers.h"
 #include "TransferOperators/TransferOperators.h"
 #include <vector>
@@ -53,30 +54,22 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]){
 
 	double pi = acos(-1);
 
-	Circle * g = new Circle(h,r,offset);
+	Grid * g = new Circle(h,r,offset);
 
-	CellDoubleArray xC = g->getCellX();
-	CellDoubleArray yC = g->getCellY();
-	CellDoubleArray rC = g->makeCellDoubleArray();
-	rC = sqrt(pow2(xC) + pow2(yC));
+	CellDoubleArray xCC = g->getCellX();
+	CellDoubleArray yCC = g->getCellY();
+	CellDoubleArray rCC = g->makeCellDoubleArray();
+	rCC = sqrt(pow2(xCC) + pow2(yCC));
 
 	CellDoubleArray u = g->makeCellDoubleArray();
-	u = cos(2*pi*rC);//pow(xC,3)*pow(yC-2,2) + pow(sin(xC-pow(yC,2)),2);
+	u = cos(2*pi*rCC);
 
-	Gradient grad(g);
-	Divergence div(g);
+	CellDoubleArray xCT = g->getCellCentroidX();
+	CellDoubleArray yCT = g->getCellCentroidY();
+	CellDoubleArray rCT = g->makeCellDoubleArray();
+	rCT = sqrt(pow2(xCT) + pow2(yCT));
 
-
-
-	//div(grad(u));
-	//Lu = where(g->getCellTypes() == REGULAR, Lu, 0);
-
-	CellDoubleArray x = g->getCellCentroidX();
-	CellDoubleArray y = g->getCellCentroidY();
-	CellDoubleArray rCentroid = g->makeCellDoubleArray();
-	rCentroid = sqrt(pow2(x) + pow2(y));
-
-	FaceDoubleArray xFace = g->getFaceX();
+	/*FaceDoubleArray xFace = g->getFaceX();
 	FaceDoubleArray yFace = g->getFaceY();
 	FaceDoubleArray theta = g->makeFaceDoubleArray();
 	theta = atan2(yFace,xFace);
@@ -87,112 +80,42 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]){
 	CellToFaceOperator flux;
 	flux = beta*grad;
 
-	//CellDoubleArray theta = g->makeCellDoubleArray();
-	//theta = atan2(y,x);
-
-	//CellDoubleArray a = g->makeCellDoubleArray();
-	//a = where(theta >= pi/2 && theta <= 3*pi/2, 0.1, 1);
-
-
-	CellToCellOperator L;
-	L = div(flux);
-
-	OperatorFactory<CellToCellOperator> factory;
-	CellToCellOperator op = factory.get(g);
-
-	//LaplacianFactory LFac;
+	LaplacianFactory LFac;
+	L = *(LFac.get(g));
 	//CellToCellOperator L;
-	//L = LFac.get(g);
-
-	CellDoubleArray Lu = L(u);
+	//L = LFac.get(g);*/
 
 	CellDoubleArray LuExact = g->makeCellDoubleArray();
-	LuExact = -2*pi*sin(2*pi*rCentroid)/rCentroid - 4*pow2(pi)*cos(2*pi*rCentroid);
-	//LuExact = 2*(x*(pow(x,2)+3*pow(y-2,2)) - sin(2*(x-pow(y,2))) + (4*pow(y,2) + 1)*cos(2*(x-pow(y,2))));
+	LuExact = -2*pi*sin(2*pi*rCT)/rCT - 4*pow2(pi)*cos(2*pi*rCT);
 
-	/*CellDoubleArray LuErr = g->makeCellDoubleArray();
-	CellDoubleArray V = g->getVolumes();
-	LuErr = abs(Lu - LuExact)*V/pow2(h);
+	double deltaT = 0.01;
 
-	LuErr = where(g->getCellTypes() != COVERED, LuErr, 0);*/
-
-	//cout << max(LuErr) << endl;
-
-	CellToCellOperator I = CellToCellOperator::getIdentity(g);
-
-	double deltaT = .05;
-	CellToCellOperator D, P, M;
-	D = (deltaT/2)*L;
-	P = I + D;
-	M = I - D;
+	CrankNicholsonDiffusionFactory CNFactory(deltaT);
+	CellToCellOperator * M = CNFactory.getLHS(g), * P = CNFactory.getRHS(g);
 
 	GSLex smoother;
 
-	u = 0;
 	CellDoubleArray uNew = g->makeCellDoubleArray();
 
-	//plotter.graphCellDoubleArray(u,g,"mesh");
-	//plotter.drawNow();
-	for(int k = 0; k < 10; k++){
+	u = 0;
+
+	mxArray * nullplhs[0], * nullprhs[0];
+
+	plotter.newFigure();
+	for(int k = 0; k < 50; k++){
+		plotter.graphCellCentroidData(u,g);
+		mexCallMATLAB(0,nullplhs,0,nullprhs,"colorbar");
+		plotter.drawNow();
 		CellDoubleArray rhs = g->makeCellDoubleArray();
-		rhs = P(u) - deltaT*LuExact;
-		smoother.smooth(uNew,u,rhs,M,100);
-		//plotter.newFigure();
+		rhs = (*P)(u) - deltaT*LuExact;
+		smoother.smooth(uNew,u,rhs,*M,100);
 		u = uNew;
-		//plotter.graphCellDoubleArray(u,g,"mesh");
-		//plotter.drawNow();
 	}
-
-	//u = x;
-
-	Grid * coarseGrid = g->getCoarse();
-	CellDoubleArray uC = coarseGrid->makeCellDoubleArray();
-
-	Grid * fineGrid = new Circle(h/2,r,offset);
-	CellDoubleArray uF = fineGrid->makeCellDoubleArray();
-
-	VolumeWeightedRestrictor restrictor;
-	restrictor.doRestrict(uC,u,coarseGrid,g);
-
-	PiecewiseConstantInterpolator interpolator;
-	interpolator.doInterpolate(u,uF,g,fineGrid);
-
-	plotter.newFigure();
-//	plotter.drawGrid(coarseGrid);
-	plotter.graphCellCentroidData(uC,coarseGrid);
-//	plotter.graphCellDoubleArray(uC,coarseGrid,"mesh");
-
-	plotter.newFigure();
-	plotter.graphCellCentroidData(uF,fineGrid);
+	plotter.graphCellCentroidData(u,g);
+	mexCallMATLAB(0,nullplhs,0,nullprhs,"colorbar");
 
 
-	/*GSLex smoother;
 
-	CellDoubleArray uOut = g->makeCellDoubleArray();
-	CellDoubleArray z = g->makeCellDoubleArray();
-	smoother.smooth(uOut,z,LuExact,L,10000);
-
-	double uOutMax = max(uOut);
-	uOut = uOut - uOutMax;
-
-	double uMax = max(u);
-	u = u - uMax;
-
-	CellDoubleArray uErr = g->makeCellDoubleArray();
-	uErr = abs(u - uOut);
-
-	uErr = where(g->getCellTypes() != COVERED, uErr, 0);
-
-	plotter.graphCellDoubleArray(uErr,g,"mesh");
-
-	cout << max(uErr) << endl;*/
-
-
-	/*plotter.newFigure();
-	plotter.graphCellDoubleArray(LuExact,g,"mesh");
-
-	plotter.newFigure();
-	plotter.graphCellDoubleArray(Lu,g,"mesh");*/
 
 	delete g;
 }
