@@ -143,6 +143,39 @@ void MexPlotTool::graphFaceDoubleArray(FaceDoubleArray & u, Grid * g){
 	mexCallMATLAB(nlhs,plhs,nrhs,prhs,"quiver");
 }
 
+void MexPlotTool::graphCellCentroidData(CellDoubleArray & u, Grid * g){
+	int numUncovered = sum(where(g->getCellTypes() != COVERED, 1, 0));
+	cout << "There are " << numUncovered << " uncovered cells." << endl;
+	int nlhs = 0;
+	int nrhs = 3*numUncovered;
+	mxArray * plhs[nlhs];
+	mxArray * prhs[nrhs];
+	int n = 0;
+	for(int i = g->iMin; i <= g->iMax; i++){
+		for(int j = g->jMin; j <= g->jMax; j++){
+			if(g->isUncovered(i,j)){
+				//cout << n << ": " << 3*n << ", " << 3*n+1 << ", " << 3*n+2 << endl;
+
+				//cout << "On uncovered cell number " << n << ", (" << i << ", " << j << ")" << endl;
+				vector<Vertex*> vertices = g->cells(i,j)->getVertices();
+				//cout << "Cell has " << vertices.size() << " uncovered vertices." << endl;
+				Array<double,1> x(vertices.size()), y(vertices.size());
+				for(int k = 0; k < vertices.size(); k++){
+					x(k) = vertices[k]->getCoord()(0);
+					y(k) = vertices[k]->getCoord()(1);
+				}
+				//cout << "\tAdded " << x << ", " << y << ", " << u(i,j) << endl;
+				prhs[3*n] = setMxVector(x);
+				prhs[3*n+1] = setMxVector(y);
+				prhs[3*n+2] = setMxDouble(u(i,j));
+				n++;
+			}
+		}
+	}
+	//cout << "Calling MATLAB" << endl;
+	mexCallMATLAB(nlhs,plhs,nrhs,prhs,"fill");
+}
+
 void MexPlotTool::graphCellDoubleArray(CellDoubleArray & u, Grid * g, string graphCommand){
 	CellDoubleArray x = g->makeCellDoubleArray();
 	CellDoubleArray y = g->makeCellDoubleArray();

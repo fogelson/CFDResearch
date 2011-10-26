@@ -34,6 +34,8 @@ public:
 	void drawGrid(Grid * g);
 	void plotFaceDoubleArrayXLine(FaceDoubleArray & u, Grid * g, int i, Direction d);
 	void drawNow();
+	void graphCellCentroidData(CellDoubleArray & u, Grid * g);
+
 };
 
 }

@@ -17,7 +17,7 @@ using namespace OOOps;
 namespace OOMultigrid{
 
 
-void VolumeWeightedRestrictor::doRestrict(CellDoubleArray & uC, CellDoubleArray & uF, Grid * fine, Grid * coarse){
+void VolumeWeightedRestrictor::doRestrict(CellDoubleArray & uC, CellDoubleArray & uF, Grid * coarse, Grid * fine){
 	uC = 0;
 	for(int iC = coarse->iMin; iC <= coarse->iMax; iC++){
 		for(int jC = coarse->jMin; jC <= coarse->jMax; jC++){

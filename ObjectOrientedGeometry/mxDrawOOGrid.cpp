@@ -82,7 +82,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]){
 	theta = atan2(yFace,xFace);
 
 	FaceDoubleArray beta = g->makeFaceDoubleArray();
-	beta = where(abs(theta) >= pi/2, 3, 1);
+	beta = 1;//where(abs(theta) >= pi/2, 3, 1);
 
 	CellToFaceOperator flux;
 	flux = beta*grad;
@@ -96,6 +96,13 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]){
 
 	CellToCellOperator L;
 	L = div(flux);
+
+	OperatorFactory<CellToCellOperator> factory;
+	CellToCellOperator op = factory.get(g);
+
+	//LaplacianFactory LFac;
+	//CellToCellOperator L;
+	//L = LFac.get(g);
 
 	CellDoubleArray Lu = L(u);
 
@@ -126,26 +133,37 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]){
 
 	//plotter.graphCellDoubleArray(u,g,"mesh");
 	//plotter.drawNow();
-	/*for(int k = 0; k < 10; k++){
+	for(int k = 0; k < 10; k++){
 		CellDoubleArray rhs = g->makeCellDoubleArray();
 		rhs = P(u) - deltaT*LuExact;
 		smoother.smooth(uNew,u,rhs,M,100);
 		//plotter.newFigure();
 		u = uNew;
-		plotter.graphCellDoubleArray(u,g,"mesh");
-		plotter.drawNow();
-	}*/
+		//plotter.graphCellDoubleArray(u,g,"mesh");
+		//plotter.drawNow();
+	}
 
-	u = x + 3*y;
+	//u = x;
 
 	Grid * coarseGrid = g->getCoarse();
 	CellDoubleArray uC = coarseGrid->makeCellDoubleArray();
 
+	Grid * fineGrid = new Circle(h/2,r,offset);
+	CellDoubleArray uF = fineGrid->makeCellDoubleArray();
+
 	VolumeWeightedRestrictor restrictor;
-	restrictor.doRestrict(uC,u,g,coarseGrid);
+	restrictor.doRestrict(uC,u,coarseGrid,g);
+
+	PiecewiseConstantInterpolator interpolator;
+	interpolator.doInterpolate(u,uF,g,fineGrid);
 
 	plotter.newFigure();
-	plotter.graphCellDoubleArray(uC,coarseGrid,"mesh");
+//	plotter.drawGrid(coarseGrid);
+	plotter.graphCellCentroidData(uC,coarseGrid);
+//	plotter.graphCellDoubleArray(uC,coarseGrid,"mesh");
+
+	plotter.newFigure();
+	plotter.graphCellCentroidData(uF,fineGrid);
 
 
 	/*GSLex smoother;

@@ -24,6 +24,7 @@ void Cell::setVolume(double volume){
 }
 
 void Cell::update(){
+	upToDate = false;
 	if(upToDate){
 		return;
 	}

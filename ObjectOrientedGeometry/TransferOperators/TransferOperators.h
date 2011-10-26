@@ -27,22 +27,28 @@ class Interpolator;
 class Restrictor;
 
 class VolumeWeightedRestrictor;
+class PiecewiseConstantInterpolator;
 
 class Interpolator{
 public:
 	virtual ~Interpolator(){}
-	virtual void doInterpolate(CellDoubleArray & uF, CellDoubleArray & uC, Grid * fine, Grid * coarse) = 0;
+	virtual void doInterpolate(CellDoubleArray & uF, CellDoubleArray & uC, Grid * coarse, Grid * fine) = 0;
+};
+
+class PiecewiseConstantInterpolator : public Interpolator{
+public:
+	void doInterpolate(CellDoubleArray & uC, CellDoubleArray & uF, Grid * coarse, Grid * fine);
 };
 
 class Restrictor{
 public:
 	virtual ~Restrictor(){}
-	virtual void doRestrict(CellDoubleArray & uC, CellDoubleArray & uF, Grid * fine, Grid * coarse) = 0;
+	virtual void doRestrict(CellDoubleArray & uC, CellDoubleArray & uF, Grid * coarse, Grid * fine) = 0;
 };
 
 class VolumeWeightedRestrictor{
 public:
-	void doRestrict(CellDoubleArray & uC, CellDoubleArray & uF, Grid * fine, Grid * coarse);
+	void doRestrict(CellDoubleArray & uC, CellDoubleArray & uF, Grid * coarse, Grid * fine);
 };
 
 }

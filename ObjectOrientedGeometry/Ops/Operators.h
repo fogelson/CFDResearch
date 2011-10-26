@@ -27,6 +27,8 @@ class FaceToCellOperator;
 class FaceToFaceOperator;
 class CellToCellOperator;
 
+class OperatorFactor;
+
 struct CellIndex;
 
 typedef int FaceIndex;
@@ -46,6 +48,8 @@ class Gradient;
 class ConstantAdvectiveFlux;
 
 class Divergence;
+
+class LaplacianFactory;
 
 struct CellIndex{
 	int i, j;
@@ -122,11 +126,23 @@ public:
 CellToCellOperator operator* (CellDoubleArray & a, CellToCellOperator & B);
 CellToCellOperator operator* (double a, CellToCellOperator & B);
 
-/*class Laplacian : public CellToCellOperator{
-public:
-	Laplacian(Grid * g);
-};*/
 
+template <class T>
+class OperatorFactory{
+protected:
+	map<Grid*,T*> created;
+	//virtual void produce(Grid * g) = 0;
+public:
+	//~OperatorFactory();
+	//void clear();
+	//void remove(Grid * g);
+	//bool contains(Grid * g);
+	T & get(Grid * g);
+};
+
+/*class LaplacianFactory : public OperatorFactory<CellToCellOperator>{
+	void produce(Grid * g);
+};*/
 }
 }
 
