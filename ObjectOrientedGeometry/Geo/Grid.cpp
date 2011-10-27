@@ -358,13 +358,16 @@ void Grid::resizeVertexDoubleArray(VertexDoubleArray & v){
 }
 
 Type Grid::getCellType(int i, int j){
+	if(i < iMin || i > iMax || j < jMin || j > jMax){
+		return COVERED;
+	}
 	if(cells(i,j) == 0){
 		return COVERED;
 	}
 	return cells(i,j)->getType();
 }
 Type Grid::getFaceType(int i, int j, Direction d){
-	if(cells(i,j) == 0){
+	if(isCovered(i,j)){
 		return COVERED;
 	}
 	if(cells(i,j)->getFace(d) == 0){

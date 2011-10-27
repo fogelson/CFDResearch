@@ -32,7 +32,7 @@ class PiecewiseConstantInterpolator;
 class Interpolator{
 public:
 	virtual ~Interpolator(){}
-	virtual void doInterpolate(CellDoubleArray & uF, CellDoubleArray & uC, Grid * coarse, Grid * fine) = 0;
+	virtual void doInterpolate(CellDoubleArray & uC, CellDoubleArray & uF, Grid * coarse, Grid * fine) = 0;
 };
 
 class PiecewiseConstantInterpolator : public Interpolator{
@@ -46,7 +46,7 @@ public:
 	virtual void doRestrict(CellDoubleArray & uC, CellDoubleArray & uF, Grid * coarse, Grid * fine) = 0;
 };
 
-class VolumeWeightedRestrictor{
+class VolumeWeightedRestrictor : public Restrictor{
 public:
 	void doRestrict(CellDoubleArray & uC, CellDoubleArray & uF, Grid * coarse, Grid * fine);
 };

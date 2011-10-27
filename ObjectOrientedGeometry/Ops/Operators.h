@@ -45,7 +45,6 @@ typedef map<CellIndex, FaceCoefficients> FaceToCellCoefficients;
 typedef map<FaceIndex, FaceCoefficients> FaceToFaceCoefficients;
 
 class Gradient;
-class ConstantAdvectiveFlux;
 
 class Divergence;
 
@@ -76,12 +75,6 @@ public:
 };
 CellToFaceOperator operator* (FaceDoubleArray & a, CellToFaceOperator & B);
 CellToFaceOperator operator* (double a, CellToFaceOperator & B);
-
-class ConstantAdvectiveFlux : public CellToFaceOperator{
-	double aX, aY;
-public:
-	ConstantAdvectiveFlux(Grid * g, double aX, double aY);
-};
 
 class Gradient : public CellToFaceOperator{
 	//void interpolateIrregularFace(double alpha, CellToFaceIndex ind1, CellToFaceIndex ind2, CellToFaceIndex ind3, CellToFaceIndex ind4);
@@ -127,6 +120,7 @@ CellToCellOperator operator* (CellDoubleArray & a, CellToCellOperator & B);
 CellToCellOperator operator* (double a, CellToCellOperator & B);
 
 }
+
 }
 
 #endif /* OPERATORS_H_ */

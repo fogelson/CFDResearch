@@ -46,7 +46,7 @@ namespace CFD{
 		 *
 		 * See comments for the various methods for a discussion of them.
 		 */
-		class StenciledMultigridSolver{;
+		class StenciledMultigridSolver{
 			StenciledSmoother * smoother;
 			Interpolator * interpolator;
 			Restrictor * restrictor;

@@ -26,6 +26,7 @@ namespace OOMultigrid{
 class StenciledSmoother;
 
 class GSLex;
+class GSFourPoint;
 
 class StenciledSmoother{
 public:
@@ -35,6 +36,12 @@ public:
 };
 
 class GSLex : public StenciledSmoother{
+public:
+	void smooth(CellDoubleArray & u, CellDoubleArray u0, CellDoubleArray f, CellToCellOperator & C, int its);
+};
+
+class GSFourPoint : public StenciledSmoother{
+	void smoothPoint(int & i, int & j, CellDoubleArray & u, CellDoubleArray & u0, CellDoubleArray & f, CellToCellOperator & C);
 public:
 	void smooth(CellDoubleArray & u, CellDoubleArray u0, CellDoubleArray f, CellToCellOperator & C, int its);
 };

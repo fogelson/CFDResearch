@@ -83,7 +83,9 @@ public:
 		return lhsOperators.count(g) > 0;
 	}
 	T * getLHS(Grid * g){
+		//cout << "Getting LHS" << endl;
 		if(!contains(g)){
+			//cout << "Need to produce LHS" << endl;
 			produce(g);
 		}
 		return lhsOperators[g];

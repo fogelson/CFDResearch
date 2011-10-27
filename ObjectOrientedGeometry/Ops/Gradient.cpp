@@ -54,6 +54,7 @@ void Gradient::interpolateIrregularFace(double alpha, CellIndex ind1, CellIndex 
 //}
 
 Gradient::Gradient(Grid * g){
+	//cout << "Trying to create gradient with h = " << g->getH() << endl;
 	this->g = g;
 	double h = g->getH();
 	constantTerm.resize(g->faces.size());
@@ -61,6 +62,7 @@ Gradient::Gradient(Grid * g){
 	for(int i = g->iMin; i <= g->iMax; i++){
 		for(int j = g->jMin; j <= g->jMax; j++){
 			if(g->cells(i,j)->isUncovered()){
+				//cout << " is uncovered." << endl;
 				CellIndex cellIndex(i,j);
 				TinyVector<Face*,5> faces = g->cells(i,j)->faces;
 				if(g->isFaceUncovered(i,j,B)){
@@ -75,9 +77,10 @@ Gradient::Gradient(Grid * g){
 					double pi = acos(-1);
 					//gradU(0) = 3*pow(x,2)*pow(y-2,2)+sin(2*(x-pow(y,2)));
 					//gradU(1) = 2*pow(x,3)*(y-2) - 2*y*sin(2*(x-pow(y,2)));
-					gradU(0) = -2*pi*sin(2*pi*r)*x/r;
-					gradU(1) = -2*pi*sin(2*pi*r)*y/r;
+					gradU(0) = 0;//-2*pi*sin(2*pi*r)*x/r;
+					gradU(1) = 0;//-2*pi*sin(2*pi*r)*y/r;
 					constantTerm(faceIndex) += gradU(0)*n(0) + gradU(1)*n(1);
+					//cout << "\tAdding boundary condition to constant term." << endl;
 				}
 				if(faces(N) != 0){
 					FaceIndex faceIndex = faces(N)->getIndex();
@@ -103,6 +106,7 @@ Gradient::Gradient(Grid * g){
 							}
 						}
 					}
+					//cout << "\tDid north face" << endl;
 				}
 				if(faces(S) != 0){
 					FaceIndex faceIndex = faces(S)->getIndex();
@@ -128,6 +132,7 @@ Gradient::Gradient(Grid * g){
 							}
 						}
 					}
+					//cout << "\tDid south face" << endl;
 				}
 				if(faces(E) != 0){
 					FaceIndex faceIndex = faces(E)->getIndex();
@@ -154,6 +159,7 @@ Gradient::Gradient(Grid * g){
 							}
 						}
 					}
+					//cout << "\tDid east face" << endl;
 				}
 				if(faces(W) != 0){
 					FaceIndex faceIndex = faces(W)->getIndex();
@@ -180,6 +186,7 @@ Gradient::Gradient(Grid * g){
 							}
 						}
 					}
+					//cout << "\tDid west face" << endl;
 				}
 			}
 		}

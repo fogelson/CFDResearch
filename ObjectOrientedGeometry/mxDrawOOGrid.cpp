@@ -11,6 +11,7 @@
 #include "Ops/OperatorFactory.h"
 #include "Smoothers/Smoothers.h"
 #include "TransferOperators/TransferOperators.h"
+#include "Multigrid/Multigrid.h"
 #include <vector>
 
 using namespace std;
@@ -88,34 +89,81 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]){
 	CellDoubleArray LuExact = g->makeCellDoubleArray();
 	LuExact = -2*pi*sin(2*pi*rCT)/rCT - 4*pow2(pi)*cos(2*pi*rCT);
 
-	double deltaT = 0.01;
+	double deltaT = 0.05;
 
-	CrankNicholsonDiffusionFactory CNFactory(deltaT);
-	CellToCellOperator * M = CNFactory.getLHS(g), * P = CNFactory.getRHS(g);
+	SplitOperatorFactory<CellToCellOperator> * factory = new CrankNicholsonDiffusionFactory(deltaT);
+	CellToCellOperator * P = factory->getRHS(g);
 
-	GSLex smoother;
+	StenciledSmoother * smoother = new GSFourPoint();
+	Interpolator * interpolator = new PiecewiseConstantInterpolator();
+	Restrictor * restrictor = new VolumeWeightedRestrictor();
 
-	CellDoubleArray uNew = g->makeCellDoubleArray();
+	MultigridSolver solver(smoother,interpolator,restrictor);
+
 
 	u = 0;
 
 	mxArray * nullplhs[0], * nullprhs[0];
 
-	plotter.newFigure();
+	Grid * fine = g;
+
+	//CellDoubleArray uNew = g->makeCellDoubleArray();
+	CellDoubleArray rhs = g->makeCellDoubleArray();
+
+	for(int n = 0; n < 20; n++){
+		rhs = (*P)(u) - deltaT*LuExact;
+		for(int k = 0; k < 3; k++){
+			//smoother->smooth(u,u,rhs,*(factory->getLHS(g)),100);
+			solver.vCycle(u,u,rhs,3,3,fine,factory);
+		}
+		//plotter.graphCellCentroidData(u,fine);
+		//mexCallMATLAB(0,nullplhs,0,nullprhs,"colorbar");
+		//plotter.drawNow();
+	}
+	//plotter.graphCellCentroidData(u,fine);
+	//mexCallMATLAB(0,nullplhs,0,nullprhs,"colorbar");
+
+/*	for(int k = 0; k < 1; k++){
+		CellToCellOperator * Afine = factory->getLHS(g);
+		smoother->smooth(uNew,u,rhs,*Afine,3);
+		CellDoubleArray Lu = g->makeCellDoubleArray();
+		Lu = (*Afine)(u);
+		CellDoubleArray rF = g->makeCellDoubleArray();
+		rF = rhs - Lu;
+		Grid * coarse = g->getCoarse();
+		CellDoubleArray rC = coarse->makeCellDoubleArray();
+		restrictor->doRestrict(rC,rF,coarse,fine);
+		CellDoubleArray eC = coarse->makeCellDoubleArray();
+		CellDoubleArray zC = coarse->makeCellDoubleArray();
+		CellToCellOperator * Acoarse = factory->getLHS(coarse);
+		smoother->smooth(eC,zC,rC,(*Acoarse),500);
+		CellDoubleArray eF = fine->makeCellDoubleArray();
+		interpolator->doInterpolate(eC,eF,coarse,fine);
+		CellDoubleArray uCorrected = fine->makeCellDoubleArray();
+		uCorrected = uNew + eF;
+		smoother->smooth(uNew,uCorrected,rhs,(*Afine),3);
+		u = uNew;
+	}*/
+
+
+
+
+	/*plotter.newFigure();
 	for(int k = 0; k < 50; k++){
 		plotter.graphCellCentroidData(u,g);
 		mexCallMATLAB(0,nullplhs,0,nullprhs,"colorbar");
 		plotter.drawNow();
 		CellDoubleArray rhs = g->makeCellDoubleArray();
 		rhs = (*P)(u) - deltaT*LuExact;
-		smoother.smooth(uNew,u,rhs,*M,100);
+		solver.vCycle(uNew,u,rhs,4,4,g,factory);
 		u = uNew;
-	}
-	plotter.graphCellCentroidData(u,g);
-	mexCallMATLAB(0,nullplhs,0,nullprhs,"colorbar");
-
+	}*/
 
 
 
 	delete g;
+	delete interpolator;
+	delete restrictor;
+	delete smoother;
+	delete factory;
 }
