@@ -28,6 +28,22 @@ using namespace CFD::OOMultigrid;
  * prhs:	array of pointers to the memory locations of the inputs
  */
 
+TinyVector<double,2> solidBody(Coord pos){
+	double r = sqrt(pow2(pos(0)) + pow2(pos(1)));
+	double theta = atan2(pos(1),pos(0));
+	double pi = acos(-1);
+	double x = pos(0), y = pos(1);
+	TinyVector<double,2> out;
+
+	out(0) = y*(1.03-y)*sin(.97+y);
+	out(1) = -x*(1-.99*x)*cos(1+1.01*x);
+
+	/*else{
+		out = 0;
+	}*/
+	return out;
+}
+
 /* The following command should be invoked from MATLAB:
  *
  * mxSplit(h,r,offset)
@@ -89,9 +105,67 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]){
 	CellDoubleArray LuExact = g->makeCellDoubleArray();
 	LuExact = -2*pi*sin(2*pi*rCT)/rCT - 4*pow2(pi)*cos(2*pi*rCT);
 
-	double deltaT = 0.05;
+	double deltaT = .1;
+	double D = 1;
 
-	SplitOperatorFactory<CellToCellOperator> * factory = new CrankNicholsonDiffusionFactory(deltaT);
+	OperatorFactory<CellToCellOperator> * factory = new AdvectionDiffusionBackwardEulerFactory(1,1,D,deltaT);
+	StenciledSmoother * smoother = new GSFourPoint();
+	Interpolator * interpolator = new PiecewiseConstantInterpolator();
+	Restrictor * restrictor = new VolumeWeightedRestrictor();
+
+	MultigridSolver * solver = new MultigridSolver(smoother,interpolator,restrictor);
+
+	CellToCellOperator * lhs, * rhs;
+	lhs = factory->getLHS(g);
+	rhs = factory->getRHS(g);
+
+	u = where(sqrt(pow2(xCC) + pow2(yCC)) <= .2, 0, 1);
+
+	plotter.newFigure();
+	CellDoubleArray uNew = g->makeCellDoubleArray();
+	for(int n = 0; n <= 10; n++){
+		CellDoubleArray f = g->makeCellDoubleArray();
+		f = (*rhs)(u);
+		//smoother->smooth(uNew,u,f,*lhs,400);
+		for(int k = 0; k < 3; k++){
+			solver->vCycle(uNew,u,f,2,2,g,factory);
+			//factory->clearMap(factory->lhs);
+			//factory->clearMap(factory->rhs);
+		}
+		u = uNew;
+		if(n % 1 == 0){
+			plotter.graphCellCentroidData(u,g);
+			plotter.colorbar();
+			plotter.drawNow();
+		}
+	}
+
+	/*OperatorFactory<CellToCellOperator> * upwind = new UpwindFactory(*solidBody);
+	CellToCellOperator * uw = upwind->get(g);
+
+	u = where(abs(xCC) <= .2 || abs(yCC) <= .2 , 0,1);
+
+	mxArray * nullplhs[0], * nullprhs[0];
+
+	CellDoubleArray uNew = g->makeCellDoubleArray();
+	plotter.initializeMovie();
+	plotter.newFigure();
+
+	for(int n = 0; n <= 6000; n++){
+		uNew = u + deltaT*((*uw)(u));
+		u = uNew;
+		if(n % 200 == 0){
+			plotter.graphCellCentroidData(u,g);
+			mexCallMATLAB(0,nullplhs,0,nullprhs,"colorbar");
+			//plotter.captureFrame();
+			plotter.drawNow();
+		}
+	}
+	//plotter.playMovie();*/
+
+
+
+/*	SplitOperatorFactory<CellToCellOperator> * factory = new CrankNicholsonDiffusionFactory(deltaT);
 	CellToCellOperator * P = factory->getRHS(g);
 
 	StenciledSmoother * smoother = new GSFourPoint();
@@ -121,7 +195,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]){
 		//plotter.drawNow();
 	}
 	//plotter.graphCellCentroidData(u,fine);
-	//mexCallMATLAB(0,nullplhs,0,nullprhs,"colorbar");
+	//mexCallMATLAB(0,nullplhs,0,nullprhs,"colorbar");*/
 
 /*	for(int k = 0; k < 1; k++){
 		CellToCellOperator * Afine = factory->getLHS(g);
@@ -162,8 +236,9 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]){
 
 
 	delete g;
-	delete interpolator;
-	delete restrictor;
-	delete smoother;
 	delete factory;
+	//delete interpolator;
+	//delete restrictor;
+	//delete smoother;
+	//delete factory;
 }

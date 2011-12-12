@@ -24,7 +24,7 @@ MultigridSolver::MultigridSolver(StenciledSmoother * smoother, Interpolator * in
 	this->restrictor = restrictor;
 }
 
-void MultigridSolver::vCycle(CellDoubleArray & u, CellDoubleArray u0, CellDoubleArray & rhs, int v1, int v2, Grid * fine, SplitOperatorFactory<CellToCellOperator> * fac){
+void MultigridSolver::vCycle(CellDoubleArray & u, CellDoubleArray u0, CellDoubleArray rhs, int v1, int v2, Grid * fine, OperatorFactory<CellToCellOperator> * fac){
 	MexPlotTool plotter;
 	CellToCellOperator * Afine = fac->getLHS(fine);
 	//cout << "Got Afine" << endl;

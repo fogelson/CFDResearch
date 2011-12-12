@@ -1,12 +1,11 @@
 /*
  * LaplacianFactory.cpp
  *
- *  Created on: Dec 2, 2011
+ *  Created on: Oct 25, 2011
  *      Author: fogelson
  */
 
 
-#include "Operators.h"
 #include "OperatorFactory.h"
 #include <iostream>
 
@@ -22,9 +21,8 @@ void LaplacianFactory::produce(Grid * g){
 	}
 	Divergence div(g);
 	Gradient grad(g);
-	CellToCellOperator L;
-	L = div(grad);
-	operators[g] = new CellToCellOperator(L);
+	CellToCellOperator * L = new CellToCellOperator(div(grad));
+	operators[g] = L;
 }
 
 }

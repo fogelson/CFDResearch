@@ -28,6 +28,7 @@ Face::Face(){
 	fromCell = 0;
 	toCell = 0;
 	setType(COVERED);
+	isBoundaryFace = false;
 }
 
 void Face::setFrom(Cell * fromCell){
@@ -121,6 +122,18 @@ void Face::setNormal(TinyVector<double,2> normal){
 }
 TinyVector<double,2> Face::getNormal(){
 	return normal;
+}
+
+bool Face::isBoundary(){
+	return isUncovered() && isBoundaryFace;
+}
+
+bool Face::isInterior(){
+	return isUncovered() && !isBoundaryFace;
+}
+
+void Face::setIsBoundary(bool isBoundaryFace){
+	this->isBoundaryFace = isBoundaryFace;
 }
 
 

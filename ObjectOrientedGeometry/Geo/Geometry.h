@@ -125,6 +125,8 @@ public:
 	bool upToDate;
 	double area;
 
+	bool isBoundaryFace;
+
 	void update();
 public:
 	Face();
@@ -153,6 +155,10 @@ public:
 
 	bool hasA();
 	bool hasB();
+
+	bool isBoundary();
+	bool isInterior();
+	void setIsBoundary(bool isBoundaryFace);
 };
 
 class Vertex : public GridElement{

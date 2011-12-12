@@ -35,7 +35,7 @@ class MultigridSolver{
 
 public:
 	MultigridSolver(StenciledSmoother * smoother, Interpolator * interpolator, Restrictor * restrictor);
-	void vCycle(CellDoubleArray & u, CellDoubleArray u0, CellDoubleArray & rhs, int v1, int v2, Grid * fine, SplitOperatorFactory<CellToCellOperator> * fac);
+	void vCycle(CellDoubleArray & u, CellDoubleArray u0, CellDoubleArray rhs, int v1, int v2, Grid * fine, OperatorFactory<CellToCellOperator> * fac);
 };
 
 }

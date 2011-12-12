@@ -22,6 +22,146 @@ namespace CFD{
 using namespace OOGeometry;
 namespace OOOps{
 
+/*
+ * Factory for producing single linear operators,
+ * not left and right hand sides to problems
+ */
+
+template <class T>
+class SingleOperatorFactory{
+protected:
+	map<Grid*,T*> operators;
+	virtual void produce(Grid * g) = 0;
+public:
+	static void clearMap(map<Grid*,T*> m){
+		typename map<Grid*,T*>::iterator it;
+		for(it = m.begin(); it != m.end(); it++){
+			if(it->second != 0){
+				delete it->second;
+				it->second = 0;
+			}
+		}
+		m.clear();
+	}
+	virtual ~SingleOperatorFactory(){
+		clearMap(operators);
+	}
+
+	virtual bool contains(Grid * g){
+		return operators.count(g) > 0;
+	}
+	virtual T * get(Grid * g){
+		if(!contains(g)){
+			produce(g);
+		}
+		return operators[g];
+	}
+};
+
+/*
+ * Factory for producing LHS and RHS operators for a
+ * linear problem.
+ */
+template <class T>
+class OperatorFactory{
+protected:
+
+public:map<Grid*,T*> lhs, rhs;
+protected:
+	virtual void produce(Grid * g) = 0;
+public:
+	static void clearMap(map<Grid*,T*> m){
+		SingleOperatorFactory<T>::clearMap(m);
+	}
+	virtual ~OperatorFactory(){
+		clearMap(lhs);
+		clearMap(rhs);
+	}
+	virtual bool contains(Grid * g){
+		return lhs.count(g) > 0;
+	}
+	virtual T * getLHS(Grid * g){
+		if(!contains(g)){
+			produce(g);
+		}
+		return lhs[g];
+	}
+	virtual T * getRHS(Grid * g){
+		if(!contains(g)){
+			produce(g);
+		}
+		return rhs[g];
+	}
+};
+
+/*template <class T>
+class VariableOperatorFactory : public OperatorFactory<T>{
+	OperatorFactory<T> * variablePart;
+public:
+	virtual ~VariableOperatorFactory(){
+		delete variablePart;
+	}
+	virtual bool reinitializeVariablePart() = 0;
+	virtual bool contains(Grid * g){
+		return lhs.count(g) > 0 && variablePart->contains(g) > 0;
+	}
+	virtual T * getLHS(Grid * g){
+		if(!contains(g)){
+			produce(g);
+		}
+		return lhs[g];
+	}
+	virtual T * getRHS(Grid * g){
+		if(!contains(g)){
+			produce(g);
+		}
+		return rhs[g];
+	}
+};*/
+
+class LaplacianFactory;
+
+class LaplacianFactory : public SingleOperatorFactory<CellToCellOperator>{
+	void produce(Grid * g);
+};
+
+class DiffusionBackwardEulerFactory;
+
+class DiffusionBackwardEulerFactory : public OperatorFactory<CellToCellOperator>{
+	double D, deltaT;
+
+	void produce(Grid * g);
+public:
+	DiffusionBackwardEulerFactory(double D, double deltaT);
+	/*DiffusionBackwardEulerFactory(double D, double deltaT){
+		this->D = D;
+		this->deltaT = deltaT;
+	}*/
+};
+
+class AdvectionBackwardEulerFactory;
+
+class AdvectionBackwardEulerFactory : public OperatorFactory<CellToCellOperator>{
+	double aX, aY, deltaT;
+	void produce(Grid * g);
+public:
+	AdvectionBackwardEulerFactory(double aX, double aY, double deltaT);
+};
+
+class AdvectionDiffusionBackwardEulerFactory;
+
+class AdvectionDiffusionBackwardEulerFactory : public OperatorFactory<CellToCellOperator>{
+	double aX, aY, D, deltaT;
+	LaplacianFactory laplacian;
+	//AdvectionBackwardEulerFactory advection;
+	void produce(Grid * g);
+public:
+	AdvectionDiffusionBackwardEulerFactory(double aX, double aY, double D, double deltaT);
+};
+
+
+
+/*
 template <class T>
 class OperatorFactory{
 protected:
@@ -51,6 +191,22 @@ public:
 		}
 		return operators[g];
 	}
+};
+
+template <class T, int levels = 2>
+class TimeOperatorFactory{
+protected:
+	OperatorFactory<T> * op;
+public:
+	virtual ~TimeOperatorFactory(){}
+	virtual T * get(Grid * g, int l) = 0;
+};
+
+template <class T>
+class BackwardEulerFactory : public TimeOperatorFactory<T>{
+public:
+	BackwardEulerFactory(OperatorFactory<T> * op);
+	T * get(Grid * g, int l);
 };
 
 template <class T>
@@ -85,8 +241,7 @@ public:
 	T * getLHS(Grid * g){
 		//cout << "Getting LHS" << endl;
 		if(!contains(g)){
-			//cout << "Need to produce LHS" << endl;
-			produce(g);
+ 			produce(g);
 		}
 		return lhsOperators[g];
 	}
@@ -102,6 +257,16 @@ class LaplacianFactory;
 
 class CrankNicholsonDiffusionFactory;
 
+class UpwindFactory;
+
+class UpwindFactory : public OperatorFactory<CellToCellOperator>{
+	void produce(Grid * g);
+	double aX, aY;
+	TinyVector<double,2> (* c)(Coord pos);
+public:
+	UpwindFactory(TinyVector<double,2> (* c)(Coord pos));
+};
+
 class CrankNicholsonDiffusionFactory : public SplitOperatorFactory<CellToCellOperator>{
 	void produce(Grid * g);
 	double deltaT;
@@ -112,7 +277,7 @@ public:
 class LaplacianFactory : public OperatorFactory<CellToCellOperator>{
 	void produce(Grid * g);
 };
-
+*/
 
 /*class LaplacianFactory : public OperatorFactory<CellToCellOperator>{
 	void produce(Grid * g);

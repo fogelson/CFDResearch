@@ -317,6 +317,7 @@ Face * Cell::createBoundary(){
 		fB->setB(vB);
 		fB->setType(IRREGULAR);
 		fB->setFrom(this);
+		fB->setIsBoundary(true);
 		faces(B) = fB;
 		//cout << "Created boundary face connecting " << vA->getCoord() << " and " << vB->getCoord() << endl;
 	}

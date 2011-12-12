@@ -8,6 +8,7 @@
 
 #include "MexTools.h"
 #include <iostream>
+#include <sstream>
 
 using namespace std;
 
@@ -29,6 +30,26 @@ void MexPlotTool::newFigure(){
 
 void MexPlotTool::drawNow(){
 	mexEvalString("drawnow");
+}
+
+void MexPlotTool::colorbar(){
+	int nlhs = 0, nrhs = 0;
+	mxArray * plhs[nlhs];
+	mxArray * prhs[nrhs];
+	mexCallMATLAB(nlhs,plhs,nrhs,prhs,"colorbar");
+}
+
+void MexPlotTool::initializeMovie(){
+	movieFrame = 1;
+}
+void MexPlotTool::captureFrame(){
+	stringstream s;
+	s << "F(" << movieFrame << ") = getframe;";
+	mexEvalString(s.str().c_str());
+	movieFrame++;
+}
+void MexPlotTool::playMovie(){
+	mexEvalString("movie(F,2)");
 }
 
 void MexPlotTool::drawGrid(Grid * g){
@@ -146,7 +167,7 @@ void MexPlotTool::graphFaceDoubleArray(FaceDoubleArray & u, Grid * g){
 void MexPlotTool::graphCellCentroidData(CellDoubleArray & u, Grid * g){
 	int numUncovered = sum(where(g->getCellTypes() != COVERED, 1, 0));
 	int nlhs = 0;
-	int nrhs = 3*numUncovered;
+	int nrhs = 3*numUncovered+2;
 	mxArray * plhs[nlhs];
 	mxArray * prhs[nrhs];
 	int n = 0;
@@ -171,6 +192,11 @@ void MexPlotTool::graphCellCentroidData(CellDoubleArray & u, Grid * g){
 			}
 		}
 	}
+	string edgecolor = "EdgeColor";
+	prhs[3*(n-1)+3] = mxCreateString(edgecolor.c_str());
+	string none = "None";
+	prhs[3*(n-1)+4] = mxCreateString(none.c_str());
+
 	//cout << "Calling MATLAB" << endl;
 	mexCallMATLAB(nlhs,plhs,nrhs,prhs,"fill");
 }

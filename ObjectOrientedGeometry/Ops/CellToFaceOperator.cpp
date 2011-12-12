@@ -14,6 +14,11 @@ namespace CFD{
 using namespace OOGeometry;
 namespace OOOps{
 
+void CellToFaceOperator::setGrid(Grid * g){
+	this->g = g;
+	constantTerm.resize(g->faces.size());
+	constantTerm = 0;
+}
 
 FaceDoubleArray CellToFaceOperator::apply(CellDoubleArray & u){
 	FaceDoubleArray out = g->makeFaceDoubleArray();

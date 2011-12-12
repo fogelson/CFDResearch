@@ -71,6 +71,8 @@ public:
 	CellToFaceOperator & operator= (const CellToFaceOperator & rhs);
 	CellToFaceOperator operator+ (CellToFaceOperator & B);
 	CellToFaceOperator operator- (CellToFaceOperator & B);
+	void setGrid(Grid * g);
+	Grid * getGrid();
 
 };
 CellToFaceOperator operator* (FaceDoubleArray & a, CellToFaceOperator & B);
@@ -93,6 +95,8 @@ public:
 	//CellDoubleArray operator() (FaceDoubleArray & u);
 	CellDoubleArray operator() (FaceDoubleArray u);
 	CellToCellOperator operator() (CellToFaceOperator & B);
+	void setGrid(Grid * g);
+	Grid * getGrid();
 };
 
 class Divergence : public FaceToCellOperator{
@@ -114,6 +118,8 @@ public:
 	CellToCellOperator operator- (CellToCellOperator & B);
 	CellDoubleArray apply(CellDoubleArray & u);
 	CellDoubleArray operator() (CellDoubleArray & u);
+	void setGrid(Grid * g);
+	Grid * getGrid();
 };
 
 CellToCellOperator operator* (CellDoubleArray & a, CellToCellOperator & B);

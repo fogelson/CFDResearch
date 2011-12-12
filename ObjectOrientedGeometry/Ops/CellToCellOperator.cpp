@@ -124,5 +124,15 @@ CellToCellOperator CellToCellOperator::getIdentity(Grid * g){
 	return out;
 }
 
+void CellToCellOperator::setGrid(Grid * g){
+	this->g = g;
+	constantTerm.resize(g->xRange,g->yRange);
+	constantTerm = 0;
+}
+
+Grid * CellToCellOperator::getGrid(){
+	return g;
+}
+
 }
 }

@@ -25,6 +25,7 @@ namespace OOMexTools{
 class MexPlotTool;
 
 class MexPlotTool{
+	int movieFrame;
 public:
 	void newFigure();
 	void holdOn();
@@ -35,7 +36,10 @@ public:
 	void plotFaceDoubleArrayXLine(FaceDoubleArray & u, Grid * g, int i, Direction d);
 	void drawNow();
 	void graphCellCentroidData(CellDoubleArray & u, Grid * g);
-
+	void colorbar();
+	void initializeMovie();
+	void captureFrame();
+	void playMovie();
 };
 
 }
