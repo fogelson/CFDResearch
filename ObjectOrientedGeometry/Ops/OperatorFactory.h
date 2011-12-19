@@ -33,14 +33,19 @@ protected:
 	map<Grid*,T*> operators;
 	virtual void produce(Grid * g) = 0;
 public:
-	static void clearMap(map<Grid*,T*> m){
+	static void clearMap(map<Grid*,T*> & m){
+		//cout << "Starting to clear" << endl;
 		typename map<Grid*,T*>::iterator it;
 		for(it = m.begin(); it != m.end(); it++){
+			//cout << "Checking operator at location " << it->second << endl;
 			if(it->second != 0){
+				//cout << "Deleting operator at location " << it->second << endl;
 				delete it->second;
+				//cout << "Zeroing" << endl;
 				it->second = 0;
 			}
 		}
+		//cout << "Clearing map" << endl;
 		m.clear();
 	}
 	virtual ~SingleOperatorFactory(){
@@ -70,7 +75,7 @@ public:map<Grid*,T*> lhs, rhs;
 protected:
 	virtual void produce(Grid * g) = 0;
 public:
-	static void clearMap(map<Grid*,T*> m){
+	static void clearMap(map<Grid*,T*> & m){
 		SingleOperatorFactory<T>::clearMap(m);
 	}
 	virtual ~OperatorFactory(){
@@ -78,7 +83,7 @@ public:
 		clearMap(rhs);
 	}
 	virtual bool contains(Grid * g){
-		return lhs.count(g) > 0;
+		return lhs.count(g) > 0 && lhs[g] != 0 && rhs.count(g) > 0 && rhs[g] != 0;
 	}
 	virtual T * getLHS(Grid * g){
 		if(!contains(g)){
@@ -125,6 +130,15 @@ class LaplacianFactory : public SingleOperatorFactory<CellToCellOperator>{
 	void produce(Grid * g);
 };
 
+class UpwindFactory;
+
+class UpwindFactory : public SingleOperatorFactory<CellToCellOperator>{
+	double aX, aY;
+	void produce(Grid * g);
+public:
+	void setA(double aX, double aY);
+};
+
 class DiffusionBackwardEulerFactory;
 
 class DiffusionBackwardEulerFactory : public OperatorFactory<CellToCellOperator>{
@@ -145,7 +159,8 @@ class AdvectionBackwardEulerFactory : public OperatorFactory<CellToCellOperator>
 	double aX, aY, deltaT;
 	void produce(Grid * g);
 public:
-	AdvectionBackwardEulerFactory(double aX, double aY, double deltaT);
+	void setA(double aX, double aY);
+	void setDeltaT(double deltaT);
 };
 
 class AdvectionDiffusionBackwardEulerFactory;
@@ -153,10 +168,13 @@ class AdvectionDiffusionBackwardEulerFactory;
 class AdvectionDiffusionBackwardEulerFactory : public OperatorFactory<CellToCellOperator>{
 	double aX, aY, D, deltaT;
 	LaplacianFactory laplacian;
-	//AdvectionBackwardEulerFactory advection;
+	UpwindFactory uw;
 	void produce(Grid * g);
 public:
 	AdvectionDiffusionBackwardEulerFactory(double aX, double aY, double D, double deltaT);
+	void setA(double aX, double aY);
+	void setD(double D);
+	void setDeltaT(double deltaT);
 };
 
 

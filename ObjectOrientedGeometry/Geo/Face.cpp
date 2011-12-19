@@ -29,6 +29,8 @@ Face::Face(){
 	toCell = 0;
 	setType(COVERED);
 	isBoundaryFace = false;
+	isNSFace = false;
+	isEWFace = false;
 }
 
 void Face::setFrom(Cell * fromCell){
@@ -135,6 +137,24 @@ bool Face::isInterior(){
 void Face::setIsBoundary(bool isBoundaryFace){
 	this->isBoundaryFace = isBoundaryFace;
 }
+
+bool Face::isEW(){
+	return isEWFace;
+}
+
+bool Face::isNS(){
+	return isNSFace;
+}
+
+void Face::setIsEW(bool isEWFace){
+	this->isEWFace = isEWFace;
+}
+
+void Face::setIsNS(bool isNSFace){
+	this->isNSFace = isNSFace;
+}
+
+
 
 
 }

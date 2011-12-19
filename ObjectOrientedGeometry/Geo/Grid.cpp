@@ -95,6 +95,7 @@ void Grid::tile(double xMin, double yMin, double xMax, double yMax){
 			Cell * westCell  = i-1 >= iMin ? cells(i-1,j) : 0;
 			if(!current->hasFace(N)){
 				Face * newFace = createFace();
+				newFace->setIsNS(true);
 				current->setFace(newFace,N);
 				TinyVector<double,2> normal;
 				normal(0) = 0;
@@ -108,6 +109,7 @@ void Grid::tile(double xMin, double yMin, double xMax, double yMax){
 			}
 			if(!current->hasFace(S)){
 				Face * newFace = createFace();
+				newFace->setIsNS(true);
 				current->setFace(newFace,S);
 				TinyVector<double,2> normal;
 				normal(0) = 0;
@@ -121,6 +123,7 @@ void Grid::tile(double xMin, double yMin, double xMax, double yMax){
 			}
 			if(!current->hasFace(E)){
 				Face * newFace = createFace();
+				newFace->setIsEW(true);
 				current->setFace(newFace,E);
 				TinyVector<double,2> normal;
 				normal(0) = 1;
@@ -134,6 +137,7 @@ void Grid::tile(double xMin, double yMin, double xMax, double yMax){
 			}
 			if(!current->hasFace(W)){
 				Face * newFace = createFace();
+				newFace->setIsEW(true);
 				current->setFace(newFace,W);
 				TinyVector<double,2> normal;
 				normal(0) = 1;

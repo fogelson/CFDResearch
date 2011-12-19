@@ -126,6 +126,7 @@ public:
 	double area;
 
 	bool isBoundaryFace;
+	bool isEWFace, isNSFace;
 
 	void update();
 public:
@@ -159,6 +160,10 @@ public:
 	bool isBoundary();
 	bool isInterior();
 	void setIsBoundary(bool isBoundaryFace);
+	bool isEW();
+	bool isNS();
+	void setIsEW(bool isEWFace);
+	void setIsNS(bool isNSFace);
 };
 
 class Vertex : public GridElement{

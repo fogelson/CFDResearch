@@ -105,10 +105,11 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]){
 	CellDoubleArray LuExact = g->makeCellDoubleArray();
 	LuExact = -2*pi*sin(2*pi*rCT)/rCT - 4*pow2(pi)*cos(2*pi*rCT);
 
-	double deltaT = .1;
-	double D = 1;
+	double deltaT = .01;
+	double D = .1;
 
-	OperatorFactory<CellToCellOperator> * factory = new AdvectionDiffusionBackwardEulerFactory(1,1,D,deltaT);
+	//OperatorFactory<CellToCellOperator> * factory = new AdvectionDiffusionBackwardEulerFactory(3,0,D,deltaT);
+	AdvectionDiffusionBackwardEulerFactory  * factory = new AdvectionDiffusionBackwardEulerFactory(8,0,D,deltaT);
 	StenciledSmoother * smoother = new GSFourPoint();
 	Interpolator * interpolator = new PiecewiseConstantInterpolator();
 	Restrictor * restrictor = new VolumeWeightedRestrictor();
@@ -116,25 +117,39 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]){
 	MultigridSolver * solver = new MultigridSolver(smoother,interpolator,restrictor);
 
 	CellToCellOperator * lhs, * rhs;
-	lhs = factory->getLHS(g);
-	rhs = factory->getRHS(g);
 
-	u = where(sqrt(pow2(xCC) + pow2(yCC)) <= .2, 0, 1);
+	u = where(xCC <= .01, 1, 0);
+
 
 	plotter.newFigure();
 	CellDoubleArray uNew = g->makeCellDoubleArray();
-	for(int n = 0; n <= 10; n++){
-		CellDoubleArray f = g->makeCellDoubleArray();
+	CellDoubleArray f = g->makeCellDoubleArray();
+
+	for(int n = 0; n <= 50; n++){
+//		CellDoubleArray s = g->makeCellDoubleArray();
+//		s = (g->getVolumes())*u;
+//		double total = sum(where(g->getCellTypes() != COVERED, s, 0));
+//		cout << total << endl;
+
+		if(n >= 25){
+			factory->setA(-3,0);
+		}
+
+		lhs = factory->getLHS(g);
+		rhs = factory->getRHS(g);
 		f = (*rhs)(u);
 		//smoother->smooth(uNew,u,f,*lhs,400);
 		for(int k = 0; k < 3; k++){
 			solver->vCycle(uNew,u,f,2,2,g,factory);
 			//factory->clearMap(factory->lhs);
 			//factory->clearMap(factory->rhs);
+			//lhs = factory->getLHS(g);
+			//rhs = factory->getRHS(g);
 		}
 		u = uNew;
 		if(n % 1 == 0){
 			plotter.graphCellCentroidData(u,g);
+//			plotter.graphCellDoubleArray(u,g,"mesh");
 			plotter.colorbar();
 			plotter.drawNow();
 		}
