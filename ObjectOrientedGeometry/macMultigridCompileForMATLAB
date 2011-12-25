@@ -1,0 +1,5 @@
+cd Multigrid
+/usr/bin/g++ -c  -I/usr/local/include -I/Applications/MATLAB_R2010a.app/extern/include -I/Applications/MATLAB_R2010a.app/simulink/include -DMATLAB_MEX_FILE -fno-common -no-cpp-precomp -fexceptions -arch x86_64 -isysroot /Developer/SDKs/MacOSX10.5.sdk -mmacosx-version-min=10.5  -DMX_COMPAT_32 -O2 -DNDEBUG  *.cpp
+cd ..
+ar cr libmultigridmx.a Multigrid/*.o
+rm Multigrid/*.o

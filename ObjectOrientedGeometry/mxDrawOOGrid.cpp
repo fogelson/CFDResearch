@@ -109,7 +109,12 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]){
 	double D = .1;
 
 	//OperatorFactory<CellToCellOperator> * factory = new AdvectionDiffusionBackwardEulerFactory(3,0,D,deltaT);
-	AdvectionDiffusionBackwardEulerFactory  * factory = new AdvectionDiffusionBackwardEulerFactory(8,0,D,deltaT);
+	//AdvectionDiffusionBackwardEulerFactory  * factory = new AdvectionDiffusionBackwardEulerFactory(8,0,D,deltaT);
+	FENEBackwardEulerFactory * factory = new FENEBackwardEulerFactory(deltaT);
+	factory->setD(D);
+	factory->setH(0);
+	factory->setQmax(1);
+	factory->setGradU(0,0,0,0);
 	StenciledSmoother * smoother = new GSFourPoint();
 	Interpolator * interpolator = new PiecewiseConstantInterpolator();
 	Restrictor * restrictor = new VolumeWeightedRestrictor();
@@ -132,7 +137,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]){
 //		cout << total << endl;
 
 		if(n >= 25){
-			factory->setA(-3,0);
+			//factory->setA(-3,0);
 		}
 
 		lhs = factory->getLHS(g);

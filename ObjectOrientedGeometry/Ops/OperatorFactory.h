@@ -139,6 +139,33 @@ public:
 	void setA(double aX, double aY);
 };
 
+class FENEUpwindFactory;
+
+class FENEUpwindFactory : public SingleOperatorFactory<CellToCellOperator>{
+	double Qmax, H;
+
+	double u11, u12, u21, u22;
+
+	map<Grid*,FaceDoubleArray> springSpeedQ1Map, springSpeedQ2Map;
+
+	FaceDoubleArray springSpeedQ1(Grid * g);
+	FaceDoubleArray springSpeedQ2(Grid * g);
+	FaceDoubleArray flowSpeedQ1(Grid * g);
+	FaceDoubleArray flowSpeedQ2(Grid * g);
+
+	void produce(Grid * g);
+
+public:
+	FENEUpwindFactory();
+	void setH(double H);
+	double getH();
+
+	void setQmax(double Qmax);
+	double getQmax();
+
+	void setGradU(double u11, double u12, double u21, double u22);
+};
+
 class DiffusionBackwardEulerFactory;
 
 class DiffusionBackwardEulerFactory : public OperatorFactory<CellToCellOperator>{
@@ -175,6 +202,22 @@ public:
 	void setA(double aX, double aY);
 	void setD(double D);
 	void setDeltaT(double deltaT);
+};
+
+class FENEBackwardEulerFactory;
+
+class FENEBackwardEulerFactory : public OperatorFactory<CellToCellOperator>{
+	double D, deltaT;
+	LaplacianFactory laplacian;
+	FENEUpwindFactory uw;
+	void produce(Grid * g);
+public:
+	FENEBackwardEulerFactory(double deltaT);
+	void setDeltaT(double deltaT);
+	void setD(double D);
+	void setQmax(double Qmax);
+	void setH(double H);
+	void setGradU(double u11, double u12, double u21, double u22);
 };
 
 
