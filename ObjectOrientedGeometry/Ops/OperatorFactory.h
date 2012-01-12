@@ -22,6 +22,19 @@ namespace CFD{
 using namespace OOGeometry;
 namespace OOOps{
 
+class FaceCoefficientContainer;
+
+class FaceCoefficientContainer{
+	map<Grid*,FaceDoubleArray*> coefficients;
+public:
+	~FaceCoefficientContainer();
+	void clear();
+	FaceDoubleArray & get(Grid * g);
+	FaceDoubleArray & operator() (Grid * g);
+	bool contains(Grid * g);
+};
+
+
 /*
  * Factory for producing single linear operators,
  * not left and right hand sides to problems
@@ -146,12 +159,12 @@ class FENEUpwindFactory : public SingleOperatorFactory<CellToCellOperator>{
 
 	double u11, u12, u21, u22;
 
-	map<Grid*,FaceDoubleArray> springSpeedQ1Map, springSpeedQ2Map;
+	FaceCoefficientContainer springSpeedQ1, springSpeedQ2;
 
-	FaceDoubleArray springSpeedQ1(Grid * g);
-	FaceDoubleArray springSpeedQ2(Grid * g);
-	FaceDoubleArray flowSpeedQ1(Grid * g);
-	FaceDoubleArray flowSpeedQ2(Grid * g);
+	FaceDoubleArray getSpringSpeedQ1(Grid * g);
+	FaceDoubleArray getSpringSpeedQ2(Grid * g);
+	FaceDoubleArray getFlowSpeedQ1(Grid * g);
+	FaceDoubleArray getFlowSpeedQ2(Grid * g);
 
 	void produce(Grid * g);
 
@@ -214,6 +227,21 @@ class FENEBackwardEulerFactory : public OperatorFactory<CellToCellOperator>{
 public:
 	FENEBackwardEulerFactory(double deltaT);
 	void setDeltaT(double deltaT);
+	void setD(double D);
+	void setQmax(double Qmax);
+	void setH(double H);
+	void setGradU(double u11, double u12, double u21, double u22);
+};
+
+class FENESteadyFactory;
+
+class FENESteadyFactory : public OperatorFactory<CellToCellOperator>{
+	double D;
+	LaplacianFactory laplacian;
+	FENEUpwindFactory uw;
+	void produce(Grid * g);
+public:
+	FENESteadyFactory();
 	void setD(double D);
 	void setQmax(double Qmax);
 	void setH(double H);

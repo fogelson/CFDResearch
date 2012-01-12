@@ -105,16 +105,17 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]){
 	CellDoubleArray LuExact = g->makeCellDoubleArray();
 	LuExact = -2*pi*sin(2*pi*rCT)/rCT - 4*pow2(pi)*cos(2*pi*rCT);
 
-	double deltaT = .01;
+	double deltaT = .05;
 	double D = .1;
 
 	//OperatorFactory<CellToCellOperator> * factory = new AdvectionDiffusionBackwardEulerFactory(3,0,D,deltaT);
 	//AdvectionDiffusionBackwardEulerFactory  * factory = new AdvectionDiffusionBackwardEulerFactory(8,0,D,deltaT);
-	FENEBackwardEulerFactory * factory = new FENEBackwardEulerFactory(deltaT);
-	factory->setD(D);
-	factory->setH(0);
+	//FENEBackwardEulerFactory * factory = new FENEBackwardEulerFactory(deltaT);
+	FENESteadyFactory * factory = new FENESteadyFactory();
+	factory->setD(1);
+	factory->setH(1);
 	factory->setQmax(1);
-	factory->setGradU(0,0,0,0);
+	factory->setGradU(0,10,0,0);
 	StenciledSmoother * smoother = new GSFourPoint();
 	Interpolator * interpolator = new PiecewiseConstantInterpolator();
 	Restrictor * restrictor = new VolumeWeightedRestrictor();
@@ -123,28 +124,29 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]){
 
 	CellToCellOperator * lhs, * rhs;
 
-	u = where(xCC <= .01, 1, 0);
+	u = 1;//where(xCC <= .01, 1, 0);
 
 
 	plotter.newFigure();
 	CellDoubleArray uNew = g->makeCellDoubleArray();
 	CellDoubleArray f = g->makeCellDoubleArray();
 
-	for(int n = 0; n <= 50; n++){
+	lhs = factory->getLHS(g);
+	rhs = factory->getRHS(g);
+
+
+	for(int n = 0; n <= 0; n++){
+		cout << n << endl;
 //		CellDoubleArray s = g->makeCellDoubleArray();
 //		s = (g->getVolumes())*u;
 //		double total = sum(where(g->getCellTypes() != COVERED, s, 0));
 //		cout << total << endl;
 
-		if(n >= 25){
-			//factory->setA(-3,0);
-		}
-
 		lhs = factory->getLHS(g);
 		rhs = factory->getRHS(g);
 		f = (*rhs)(u);
 		//smoother->smooth(uNew,u,f,*lhs,400);
-		for(int k = 0; k < 3; k++){
+		for(int k = 0; k < 30; k++){
 			solver->vCycle(uNew,u,f,2,2,g,factory);
 			//factory->clearMap(factory->lhs);
 			//factory->clearMap(factory->rhs);
@@ -152,13 +154,16 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]){
 			//rhs = factory->getRHS(g);
 		}
 		u = uNew;
-		if(n % 1 == 0){
+		/*if(n % 1 == 0){
 			plotter.graphCellCentroidData(u,g);
 //			plotter.graphCellDoubleArray(u,g,"mesh");
 			plotter.colorbar();
 			plotter.drawNow();
-		}
+		}*/
 	}
+	plotter.graphCellCentroidData(u,g);
+	plotter.colorbar();
+	plotter.drawNow();
 
 	/*OperatorFactory<CellToCellOperator> * upwind = new UpwindFactory(*solidBody);
 	CellToCellOperator * uw = upwind->get(g);
