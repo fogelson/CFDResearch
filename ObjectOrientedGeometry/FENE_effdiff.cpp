@@ -47,7 +47,7 @@
 
 // Two dimension of Oldroyd-B.
 
-#include "../ConfigFile/ConfigFile.h"
+#include "../../ConfigFile/ConfigFile.h"
 
 #include <math.h>
 #include <iostream>
@@ -59,8 +59,10 @@
 
 //#include "FENETiming.h"
 
-#include "FENEStress.h"
-#include "FENEMaterialDerivative.h"
+#include "Interscale/Interscale.h"
+#include "MacroscaleObjects.h"
+
+using namespace CFD::Interscale;
 
 using namespace std;
 
@@ -202,7 +204,7 @@ double PI2, kB;
 ////////////////////////////---Main Part---/////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////
 
-int mainNot(int argc, char *argv[]) {
+int main(int argc, char *argv[]) {
 	int Total_iterations;
 	int Record_iterations;
 
@@ -261,10 +263,8 @@ int mainNot(int argc, char *argv[]) {
 
 	cout << "deltaT should really equal " << dt << endl;
 
-	CFD::FokkerPlanckSolver fps(N, deltaX, dt, h, offset, D, H, Q0, lambda);
-	CFD::UniformAdvector advect(N, deltaX, deltaX, fps.getGrid());
-
-
+	FokkerPlanckSolver fps(N, deltaX, dt, h, offset, D, H, Q0, lambda);
+	UniformAdvector advect(N, deltaX, deltaX, fps.getGrid());
 
 	Total_iterations = int(finalTime / dt + EPS);
 	Record_iterations = int(saveTime / dt + EPS);

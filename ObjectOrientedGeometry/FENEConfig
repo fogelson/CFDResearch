@@ -1,0 +1,91 @@
+# Configuration file for the FENE_effdiff.cpp FENE solver.
+
+### Time parameters ###
+# deltaT = 0.1
+# finaltime = 4
+# savetime = 1
+
+### Physical space parameters ###
+# Number of grid points in the x and y directions in physical space. Default 512.
+n = 64
+
+### Configuration space parameters ###
+# Grid spacing in the configuration space.
+deltaQ = 0.01
+# Number of grid points in the configuration space. If both deltaQ and nQ
+# are set then nQ will take precedence. If neither are set, then default is nQ = 32.
+nQ = 30
+# Fraction of deltaQ by which to offset the grid. Default 0.5.
+# offset = .5
+
+### Macroscale parameters ###
+# wi = 0.1
+# nu = 0.0
+# beta = 0.5
+
+### FENE Parameters ###
+
+# Set mode for FENE parameters. Currently valid choices are 'free',
+# and 'du'. 'larson' is also below, but not fully implemented yet.
+# These modes all just correspond to different
+# forms of the Fokker-Planck equation given in different sources.
+# Each is described below. The default is 'free'.
+
+FENEMode = free
+
+## 'free' mode parameters
+
+H_free = 1.0				# Spring stiffness
+D_free = 1.0				# Diffusion constant
+Q0_free = 1.0				# Maximum extensibility
+lambda_free = 1.0			# Polymer density
+
+## 'larson' mode parameters
+# Choosing this will set the spring stiffness to
+#		(2*k_B*T/zeta)*(3/(Q0^2))
+# and set the diffusion coefficient to
+#		2*k_B*T/zeta,
+# which are the constants we get from the expressions on pages
+# 142-143 of 'The Structure and Rheology of Complex Fluids'
+# by Larson.
+
+zeta_larson = 1.0			# Bead drag
+T_larson = 25.0				# Temperature
+Q0_larson = 1.0				# Maximum extensibility
+lambda_larson = 2.0			# Polymer density
+
+## 'du' mode parameters
+# Choosing this will set the spring stiffness to
+#		H*2/zeta
+# and set the diffusion coefficient to
+#		2*k_B*T/zeta,
+# which are the constants we get from the expressions in
+# Du et. al: 'Fene dumbbell model and its several linear
+# and nonlinear closure approximations.'
+# The polymeric stress contribution is
+#		lambda*\int F(Q) \otimes Q dQ
+
+H_du = 1.0					# Spring stiffness
+zeta_du = 1.0				# Bead drag
+T_du = 25.0					# Temperature
+Q0_du = 1.0					# Maximum extensibility
+lambda_du = 2.0				# Polymer density
+
+# Boltzmann's constant
+# Default is SI units, can be set to other units by adding a line below.
+# kB = 1.3806488e-23			# J/K (SI)
+
+
+### Parameters that Becca hasn't explained to me yet.            ###
+### No guarantee that these are correctly read into the program. ###
+# trpts =
+# pi =
+# td =
+# tr =
+# restart =
+# restart_tr =
+# mod_off =
+# rand_tr =
+# fivept_on =
+# turnfivept_on =
+# lastsaved =
