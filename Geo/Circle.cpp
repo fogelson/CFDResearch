@@ -330,6 +330,7 @@ Grid * Circle::getCoarse(){
 		}
 	}*/
 	hasCoarse = true;
+	coarseGrid->hasFine = true;
 	return coarseGrid;
 }
 

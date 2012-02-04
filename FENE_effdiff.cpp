@@ -47,7 +47,7 @@
 
 // Two dimension of Oldroyd-B.
 
-#include "../../ConfigFile/ConfigFile.h"
+#include "ConfigFile/ConfigFile.h"
 
 #include <math.h>
 #include <iostream>
@@ -99,6 +99,8 @@ double saveTime;
 int dtOn;
 int betaOn;
 int tr_pts;
+
+string configStr, dirStr;
 
 //  Claims of sub-functions.
 
@@ -254,9 +256,8 @@ int main(int argc, char *argv[]) {
 	// END FENE PARAMETERS
 	// ****************************************** //
 
-	readConfigFile();
-
 	readParameters(argc, argv);
+	readConfigFile();
 
 	if (dtOn)
 		dt = .01 / (pow(2, (log2(N) - 6)));
@@ -378,7 +379,13 @@ int main(int argc, char *argv[]) {
 
 	/*sprintf(dirname, "./wi%.2f_n%d_nu%.6f_pi%d_td%d", Wi, N, NU, pertid,
 			timedep_F);*/
-	sprintf(dirname, "./data");
+
+	if(dirStr.empty()){
+		sprintf(dirname, "./data");
+	}
+	else{
+		sprintf(dirname, dirStr.c_str());
+	}
 
 	if (access(dirname, F_OK)) { /* data directory not present */
 		sprintf(command, "mkdir %s", dirname);
@@ -408,37 +415,37 @@ int main(int argc, char *argv[]) {
 	/* If restarting a simulation, load from files */
 	else {
 		time = lastsaved;
-		sprintf(filename, "%s/S%3.3f.dat", dirname, lastsaved);
+		sprintf(filename, "%s/S%3.15f.dat", dirname, lastsaved);
 
 		Readin_S(S, filename, 3);
 
-		sprintf(filename, "%s/RHS_re%3.3f.dat", dirname, lastsaved);
+		sprintf(filename, "%s/RHS_re%3.15f.dat", dirname, lastsaved);
 		Readin_S(RHS_Re, filename, 3);
-		sprintf(filename, "%s/RHS_im%3.3f.dat", dirname, lastsaved);
+		sprintf(filename, "%s/RHS_im%3.15f.dat", dirname, lastsaved);
 		Readin_S(RHS_Im, filename, 3);
 		if (tracer && !restart_tr) {
 
 			if (turnfivept_on) {
-				sprintf(filename, "%s/tr_%3.3f.dat", dirname, lastsaved);
+				sprintf(filename, "%s/tr_%3.15f.dat", dirname, lastsaved);
 				Readin_tr(tr, filename, 1);
-				sprintf(filename, "%s/update%3.3f.dat", dirname, lastsaved);
+				sprintf(filename, "%s/update%3.15f.dat", dirname, lastsaved);
 				Readin_tr(update, filename, 1);
 				get_fivept_tr(tr, tr_fivept);
 
 			}
 			else
 				if (fivept_on && !turnfivept_on) {
-					sprintf(filename, "%s/tr_fivept_%3.3f.dat", dirname,
+					sprintf(filename, "%s/tr_fivept_%3.15f.dat", dirname,
 							lastsaved);
 					Readin_tr(tr_fivept, filename, fivept);
-					sprintf(filename, "%s/update_fivept_%3.3f.dat", dirname,
+					sprintf(filename, "%s/update_fivept_%3.15f.dat", dirname,
 							lastsaved);
 					Readin_tr(update_fivept, filename, fivept);
 				}
 				else {
-					sprintf(filename, "%s/tr_%3.3f.dat", dirname, lastsaved);
+					sprintf(filename, "%s/tr_%3.15f.dat", dirname, lastsaved);
 					Readin_tr(tr, filename, fivept);
-					sprintf(filename, "%s/update%3.3f.dat", dirname, lastsaved);
+					sprintf(filename, "%s/update%3.15f.dat", dirname, lastsaved);
 					Readin_tr(update, filename, fivept);
 
 				}
@@ -526,12 +533,12 @@ int main(int argc, char *argv[]) {
 
 		/* Save the current iteration if it is a savetime */
 		if ((iterations % Record_iterations) == 0) {
-			sprintf(filename, "%s/U%3.3f.dat", dirname, time);
+			sprintf(filename, "%s/U%3.15f.dat", dirname, time);
 
 			//Get_U_S(U, U_hat_Re, U_hat_Im, 2);
 
 			Save_U_S(U, filename, 2);
-			sprintf(filename, "%s/S%3.3f.dat", dirname, time);
+			sprintf(filename, "%s/S%3.15f.dat", dirname, time);
 
 			//Get_U_S(S, S_hat_Re, S_hat_Im, 3);
 
@@ -539,28 +546,28 @@ int main(int argc, char *argv[]) {
 			//cout << "bef if tracer " << endl;
 			if (tracer) {
 				if (fivept_on) {
-					sprintf(filename, "%s/tr_fivept_%3.3f.dat", dirname, time);
+					sprintf(filename, "%s/tr_fivept_%3.15f.dat", dirname, time);
 					Save_tr(tr_fivept, filename, fivept);
 				}
 				else {
-					sprintf(filename, "%s/tr_%3.3f.dat", dirname, time);
+					sprintf(filename, "%s/tr_%3.15f.dat", dirname, time);
 					Save_tr(tr, filename, fivept);
 				}
 			}
 
 			if (iterations > 0 || start_w_zero == false) {
-				sprintf(filename, "%s/RHS_re%3.3f.dat", dirname, time);
+				sprintf(filename, "%s/RHS_re%3.15f.dat", dirname, time);
 				Save_U_S(RHS_Re, filename, 3);
-				sprintf(filename, "%s/RHS_im%3.3f.dat", dirname, time);
+				sprintf(filename, "%s/RHS_im%3.15f.dat", dirname, time);
 				Save_U_S(RHS_Im, filename, 3);
 				if (tracer) {
 					if (fivept_on) {
-						sprintf(filename, "%s/update_fivept_%3.3f.dat",
+						sprintf(filename, "%s/update_fivept_%3.15f.dat",
 								dirname, time);
 						Save_tr(update_fivept, filename, fivept);
 					}
 					else {
-						sprintf(filename, "%s/update%3.3f.dat", dirname, time);
+						sprintf(filename, "%s/update%3.15f.dat", dirname, time);
 						Save_tr(update, filename, fivept);
 					}
 				}
@@ -1716,7 +1723,10 @@ void zeroboundary_hat(double *A_hat_Re, double *A_hat_Im, int k_dim) {
 }
 
 void readConfigFile(){
-	ConfigFile config("FENEConfig");
+	if(configStr.empty()){
+		configStr = "FENEConfig";
+	}
+	ConfigFile config(configStr);
 
 	config.readInto(N,"n");
 
@@ -1797,267 +1807,16 @@ void readParameters(int argc, char **argv) {
 	char **margv;
 	int jjj;
 
-	if (argc != 1) {
-		margv = argv;
-		margv++;
-		while (*margv != NULL) {
-			if (strcmp(*margv, "-n") == 0) {
-				margv++;
-				if (margv == NULL || (jjj = sscanf(*margv, "%d", &N)) != 1) {
-					fprintf(stderr,
-							"error in parameters: -n size , size is integer\n");
-					exit(1);
-				}
-			}
-			else if (strcmp(*margv, "-h") == 0){
-				margv++;
-				if(margv == NULL || (jjj = sscanf(*margv, "%lf", &h)) != 1){
-					fprintf(stderr,"error in parameters: -h configuration space width , value is double\n");
-					exit(1);
-				}
-				offset = h/2;
-			}
-			else if(strcmp(*margv, "-D") == 0){
-				margv++;
-				if(margv == NULL || (jjj = sscanf(*margv, "%lf", &D)) != 1){
-					fprintf(stderr, "error in parameters: -D value , value is double\n");
-					exit(1);
-				}
-			}
-			else if(strcmp(*margv, "-H") == 0){
-				margv++;
-				if(margv == NULL || (jjj = sscanf(*margv, "%lf", &H)) != 1){
-					fprintf(stderr, "error in parameters: -H value , value is double\n");
-					exit(1);
-				}
-			}
+	// First argument is the config file, second argument
+	// is the directory to save data
+	if(argc == 3){
+		configStr = argv[1];
+		dirStr = argv[2];
+		//string config(argv[1]);
+		//string dir(argv[2]);
 
-			else if(strcmp(*margv, "-Q0") == 0){
-				margv++;
-				if(margv == NULL || (jjj = sscanf(*margv, "%lf", &Q0)) != 1){
-					fprintf(stderr, "error in parameters: -Q0 value , value is double\n");
-					exit(1);
-				}
-			}
-			else if (strcmp(*margv, "-trpts") == 0) {
-				margv++;
-				if (margv == NULL || (jjj = sscanf(*margv, "%d", &tr_pts))
-						!= 1) {
-					fprintf(stderr,
-							"error in parameters: -trpts size , size is integer\n");
-					exit(1);
-				}
-			}
-/*			else if (strcmp(*margv, "-wi") == 0) {
-				margv++;
-				if (margv == NULL || (jjj = sscanf(*margv, "%lf", &Wi))
-						!= 1) {
-					fprintf(stderr,
-							"error in parameters: -wi value , value is double\n");
-					exit(1);
-				}
-			}*/
-			else if (strcmp(*margv, "-nu") == 0) {
-				margv++;
-				if (margv == NULL || (jjj = sscanf(*margv, "%lf",
-						&NU)) != 1) {
-					fprintf(stderr,
-							"error in parameters: -NU value , value is double\n");
-					exit(1);
-				}
-			}
-			else if (strcmp(*margv, "-dt") == 0) {
-				margv++;
-				if (margv == NULL || (jjj = sscanf(*margv,
-						"%lf", &dt)) != 1) {
-					fprintf(stderr,
-							"error in parameters: -dt value , value is double\n");
-					exit(1);
-				}
-				dtOn = false;
-			}
-/*			else if (strcmp(*margv, "-beta") == 0) {
-				margv++;
-				if (margv == NULL || (jjj = sscanf(*margv,
-						"%lf", &Beta)) != 1) {
-					fprintf(stderr,
-							"error in parameters: -beta value , value is double\n");
-					exit(1);
-				}
-				betaOn = false;
-			}*/
-			else if (strcmp(*margv, "-pi") == 0) {
-				pertid = true;
-
-			}
-			else if (strcmp(*margv, "-td") == 0) {
-				timedep_F = true;
-			}
-			else if (strcmp(*margv, "-tr") == 0) {
-				tracer = true;
-			}
-
-			else if (strcmp(*margv, "-restart")
-					== 0) {
-				start_w_zero = false;
-			}
-			else if (strcmp(*margv,
-					"-restart_tr") == 0) {
-				restart_tr = true;
-			}
-			else if (strcmp(*margv,
-					"-mod_off")
-					== 0) {
-				mod_off = true;
-			}
-			else if (strcmp(*margv,
-					"-rand_tr")
-					== 0) {
-				rand_tr = true;
-			}
-			else if (strcmp(
-					*margv,
-					"-fivept_on")
-					== 0) {
-				fivept_on
-				= true;
-			}
-			else if (strcmp(
-					*margv,
-					"-turnfivept_on")
-					== 0) {
-				turnfivept_on
-				= true;
-			}
-			else if (strcmp(
-					*margv,
-					"-lastsaved")
-					== 0) {
-				margv++;
-				if (margv
-						== NULL
-						|| (jjj
-								= sscanf(
-										*margv,
-										"%lf",
-										&lastsaved))
-										!= 1) {
-					fprintf(
-							stderr,
-							"error in parameters: -lastsaved value , value is double\n");
-					exit(
-							1);
-				}
-			}
-			else if (strcmp(
-					*margv,
-					"-finaltime")
-					== 0) {
-				margv++;
-				if (margv
-						== NULL
-						|| (jjj
-								= sscanf(
-										*margv,
-										"%lf",
-										&finalTime))
-										!= 1) {
-					fprintf(
-							stderr,
-							"error in parameters: -finaltime value , value is double\n");
-					exit(
-							1);
-				}
-			}
-			else if (strcmp(
-					*margv,
-					"-savetime")
-					== 0) {
-				margv++;
-				if (margv
-						== NULL
-						|| (jjj
-								= sscanf(
-										*margv,
-										"%lf",
-										&saveTime))
-										!= 1) {
-					fprintf(
-							stderr,
-							"error in parameters: -savetime value , value is double\n");
-					exit(
-							1);
-				}
-			}
-			else {
-				fprintf(
-						stderr,
-						"unknown argument  %s\n",
-						*margv);
-				fprintf(
-						stderr,
-						" arguments are:\n");
-				fprintf(
-						stderr,
-						" -n size (default 512)\n");
-				fprintf(
-						stderr,
-						" -trpts size (default 64)\n");
-				fprintf(
-						stderr,
-						" -wi value (default 0.1)\n");
-				fprintf(
-						stderr,
-						" -nu value (default 0.0)\n");
-				fprintf(
-						stderr,
-						" -dt value (default .02/(pow(2,(log2(N)-6))) )\n");
-				fprintf(
-						stderr,
-						" -beta value (default  1./(2.*Wi)) )\n");
-				fprintf(
-						stderr,
-						" -pi  (sets pertid = true, default false )\n");
-				fprintf(
-						stderr,
-						" -td  (sets timedep_F = true, default false )\n");
-				fprintf(
-						stderr,
-						" -tr  (sets tracer = true, default false )\n");
-				fprintf(
-						stderr,
-						" -restart  (sets start_w_zero = false, default true )\n");
-				fprintf(
-						stderr,
-						" -restart_tr  (sets restart_tr = true, default false )\n");
-				fprintf(
-						stderr,
-						" -mod_off (sets mod_off = true, default false )\n");
-				fprintf(
-						stderr,
-						" -rand_tr (sets rand_tr = true, default false )\n");
-				fprintf(
-						stderr,
-						" -fivept_on (sets fivept_on = true, default false )\n");
-				fprintf(
-						stderr,
-						" -turnfivept_on (sets turnfivept_on = true, default false )\n");
-				fprintf(
-						stderr,
-						" -lastsaved value (default 1.0)\n");
-				fprintf(
-						stderr,
-						" -finaltime value (default 4.0)\n");
-				fprintf(
-						stderr,
-						" -savetime value (default 1.0)\n");
-
-				exit(
-						1);
-			}
-
-			margv++;
-		}
+		//cout << config << endl;
+		//cout << dir << endl;
 	}
 
 	return;

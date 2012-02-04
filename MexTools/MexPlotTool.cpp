@@ -201,6 +201,12 @@ void MexPlotTool::graphCellCentroidData(CellDoubleArray & u, Grid * g){
 	mexCallMATLAB(nlhs,plhs,nrhs,prhs,"fill");
 }
 
+void MexPlotTool::title(string t){
+	string command;
+	command = "title('" + t + "')";
+	mexEvalString(command.c_str());
+}
+
 void MexPlotTool::graphCellDoubleArray(CellDoubleArray & u, Grid * g, string graphCommand){
 	CellDoubleArray x = g->makeCellDoubleArray();
 	CellDoubleArray y = g->makeCellDoubleArray();

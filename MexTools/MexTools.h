@@ -40,6 +40,7 @@ public:
 	void initializeMovie();
 	void captureFrame();
 	void playMovie();
+	void title(string t);
 };
 
 }

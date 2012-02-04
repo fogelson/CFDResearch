@@ -182,10 +182,11 @@ public:
 class DiffusionBackwardEulerFactory;
 
 class DiffusionBackwardEulerFactory : public OperatorFactory<CellToCellOperator>{
-	double D, deltaT;
+	double D, deltaT, t;
 
 	void produce(Grid * g);
 public:
+	void setTime(double t);
 	DiffusionBackwardEulerFactory(double D, double deltaT);
 	/*DiffusionBackwardEulerFactory(double D, double deltaT){
 		this->D = D;

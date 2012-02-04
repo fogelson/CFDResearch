@@ -35,9 +35,9 @@ Grid::~Grid(){
 	if(hasCoarse){
 		delete coarseGrid;
 	}
-	if(hasFine){
+	/*if(hasFine){
 		fineGrid->setHasCoarse(false);
-	}
+	}*/
 	//cout << "End of destructor" << endl;
 }
 

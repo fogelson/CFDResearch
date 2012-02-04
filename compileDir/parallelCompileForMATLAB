@@ -1,0 +1,22 @@
+rm libfenemx.a
+rm -rf ppss_dir
+
+ls ../Geo/*.cpp > sourcefiles.txt
+ls ../Interscale/*.cpp >> sourcefiles.txt
+ls ../Multigrid/*.cpp >> sourcefiles.txt
+ls ../TransferOperators/*.cpp >> sourcefiles.txt
+ls ../Smoothers/*.cpp >> sourcefiles.txt
+ls ../Ops/*.cpp >> sourcefiles.txt
+ls ../ConfigFile/*.cpp >> sourcefiles.txt
+ls ../MexTools/*.cpp >> sourcefiles.txt
+
+#./ppss -f sourcefiles.txt -c 'touch $ITEM'
+./ppss -f sourcefiles.txt -c 'g++-4.3 -c -I/opt/pkg/mathworks/matlab-2011a/extern/include -I/opt/pkg/mathworks/matlab-2011a/simulink/include -DMATLAB_MEX_FILE -ansi -D_GNU_SOURCE -fPIC -fno-omit-frame-pointer -pthread  -DMX_COMPAT_32 -O -DNDEBUG $ITEM' -p $1
+
+ar cr libfenemx.a *.o
+rm *.o
+
+#g++ -L/usr/lib -L. ../FENE_effdiff.cpp -lfftw -lfene -o FENE
+
+#rm -rf ppss_dir
+rm sourcefiles.txt
