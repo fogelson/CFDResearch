@@ -30,7 +30,7 @@ using namespace CFD::OOMultigrid;
 
 /* The following command should be invoked from MATLAB:
  *
- * mxMicroRefinementStudy(deltaT,h,r,t0,tF,H,D,v1,v2,vCycles)
+ * mxMicroRefinementStudy(deltaT,h,r,t0,steps,H,D,v1,v2,vCycles)
  */
 void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]){
 	// Desired number of inputs and outputs
@@ -47,14 +47,14 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]){
 
 	MexPlotTool plotter;
 
-	double deltaT, h, r, t0, tF, H, D;
-	int v1, v2, vCycles;
+	double deltaT, h, r, t0, H, D;
+	int v1, v2, vCycles, steps;
 
 	deltaT = getMxDouble(prhs[0]);
 	h = getMxDouble(prhs[1]);
 	r = getMxDouble(prhs[2]);
 	t0 = getMxDouble(prhs[3]);
-	tF = getMxDouble(prhs[4]);
+	steps = getMxInt(prhs[4]);
 	H = getMxDouble(prhs[5]);
 	D = getMxDouble(prhs[6]);
 	v1 = getMxInt(prhs[7]);
@@ -85,7 +85,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]){
 
 	Interpolator * interpolator = new PiecewiseConstantInterpolator();
 	Restrictor * restrictor = new VolumeWeightedRestrictor();
-	StenciledSmoother * smoother = new GSLex();//GSFourPoint();
+	StenciledSmoother * smoother = new GSFourPoint();
 	MultigridSolver * solver = new MultigridSolver(smoother, interpolator, restrictor);
 
 	CellDoubleArray zed = g->makeCellDoubleArray();
@@ -102,7 +102,9 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]){
 	CellDoubleArray uExact = g->makeCellDoubleArray();
 
 
-	for(int n = 0; t < tF; n++){
+
+
+	for(int n = 0; n < steps; n++){
 		t = n*deltaT + t0;
 
 		uExact = (pow2(xCentroid) + pow2(yCentroid))*exp(t);
@@ -146,7 +148,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]){
 		u0 = u;*/
 	}
 
-	uExact = (pow2(xCentroid) + pow2(yCentroid))*exp(t+deltaT);
+	uExact = (pow2(xCell) + pow2(yCell))*exp(t+deltaT);
 
 
 	CellDoubleArray err = g->makeCellDoubleArray();
@@ -158,7 +160,14 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]){
 
 	double maxErr = max(where(g->getCellTypes() != COVERED, abs(err), 0));
 	cout << errl2 << endl;
-
+/*
+	plotter.newFigure();
+	plotter.graphCellCentroidData(u,g);
+	plotter.colorbar();
+	plotter.newFigure();
+	plotter.graphCellCentroidData(uExact,g);
+	plotter.colorbar();
+*/
 	plotter.newFigure();
 	plotter.graphCellCentroidData(err,g);
 	plotter.colorbar();
